@@ -1,0 +1,26 @@
+<!-- Launches: droneInterface -->
+<launch>
+	
+	<arg name="drone_id_namespace"  default="drone1" />
+	<arg name="drone_id_int" 	default="1" />
+	<arg name="my_stack_directory" 	default="$(env AEROSTACK_STACK)" />
+
+	<!--Opened window topic-->
+    <arg name="window_opened" default="window_opened"/>
+
+    <!--Closed window topic-->
+        <arg name="closed_opened" default="closed_opened"/>
+
+	<group ns="$(arg drone_id_namespace)">
+		<node name="alphanumeric_viewer" pkg="alphanumeric_viewer" type="alphanumeric_viewer" output="screen">
+			<param name="droneId" value="$(arg drone_id_int)" type="int"/>
+			<param name="stackPath" value="$(arg my_stack_directory)" type="string"/>
+		</node>
+
+		<!--Opened window topic-->
+			<param name="window_opened" value="$(arg window_opened)" />
+
+		<!--Closed window topic-->
+			<param name="closed_opened" value="$(arg closed_opened)" />
+	</group>
+</launch>
