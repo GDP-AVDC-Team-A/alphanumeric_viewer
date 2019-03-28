@@ -11,10 +11,10 @@ add_definitions(-std=c++11)
 # Catkin
 ##############################################################################
 set(ALPHANUMERIC_VIEWER_CONTROLLER_SOURCE_DIR
-        src/sources)
+        src/source)
 
 set(ALPHANUMERIC_VIEWER_CONTROLLER_INCLUDE_DIR
-        src/includes)
+        src/include)
 
 
 set(ALPHANUMERIC_VIEWER_HEADER_FILES
@@ -25,7 +25,7 @@ set(ALPHANUMERIC_VIEWER_CONTROLLER_TEST_DIR
 )
 
 set(ALPHANUMERIC_VIEWER_SOURCE_FILES
-       src/sources/alphanumeric_viewer_process_main.cpp
+       src/source/alphanumeric_viewer_process_main.cpp
 
 )
 
