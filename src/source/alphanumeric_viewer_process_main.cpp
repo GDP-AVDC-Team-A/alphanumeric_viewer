@@ -32,7 +32,7 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ********************************************************************************/
+ ********************************************************************************/ 
 
 #include "../include/alphanumeric_viewer_process_main.h"
 
@@ -49,25 +49,70 @@ int main(int argc, char **argv)
     //Configuration
     n.param<std::string>("drone_id_namespace", drone_id_namespace, "drone1");
 
+    ros::param::get("~battery_topic_name", battery_topic_name);
+    if ( battery_topic_name.length() == 0)
+    {
+        battery_topic_name="battery";
+    }
+   ros::param::get("~altitude_topic_name", altitude_topic_name);
+    if ( altitude_topic_name.length() == 0)
+    {
+        altitude_topic_name="altitude";
+    }
+   ros::param::get("~ground_speed_topic_name", ground_speed_topic_name);
+    if ( ground_speed_topic_name.length() == 0)
+    {
+        ground_speed_topic_name="ground_speed";
+    }
+    ros::param::get("~quadrotor_command_topic_name", quadrotor_command_topic_name);
+    if ( quadrotor_command_topic_name.length() == 0)
+    {
+        quadrotor_command_topic_name="actuator_command/quadrotor_command";
+    }
+   ros::param::get("~assumed_control_mode_topic_name", assumed_control_mode_topic_name);
+    if ( assumed_control_mode_topic_name.length() == 0)
+    {
+        assumed_control_mode_topic_name="motion_reference/assumed_control_mode";
+    }
+    ros::param::get("~status_topic_name", status_topic_name);
+    if ( status_topic_name.length() == 0)
+    {
+        status_topic_name="status";
+    }
+
+    ros::param::get("~self_localization_pose_topic_name", self_localization_pose_topic_name);
+    if ( self_localization_pose_topic_name.length() == 0)
+    {
+        self_localization_pose_topic_name="self_localization/pose";
+    }
+    ros::param::get("~motion_reference_speed_topic_name", motion_reference_speed_topic_name);
+    if ( motion_reference_speed_topic_name.length() == 0)
+    {
+        motion_reference_speed_topic_name="motion_reference/speed";
+    }
+    ros::param::get("~motion_reference_pose_topic_name", motion_reference_pose_topic_name);
+    if ( motion_reference_pose_topic_name.length() == 0)
+    {
+        motion_reference_pose_topic_name="motion_reference/pose";
+    }
+
     //Sensor measurements subscribers
-    BatterySubs=n.subscribe("/"+drone_id_namespace+"/"+DRONE_CONSOLE_INTERFACE_SENSOR_BATTERY, 1, &batteryCallback);
-    AltitudeSubs=n.subscribe("/"+drone_id_namespace+"/"+DRONE_CONSOLE_INTERFACE_SENSOR_ALTITUDE, 1, &altitudeCallback);
-    GroundSpeedSubs=n.subscribe("/"+drone_id_namespace+"/"+DRONE_CONSOLE_INTERFACE_SENSOR_GROUND_SPEED, 1, &groundSpeedCallback);
+    battery_sub=n.subscribe("/"+drone_id_namespace+"/"+battery_topic_name, 1, &batteryCallback);
+    altitude_sub=n.subscribe("/"+drone_id_namespace+"/"+altitude_topic_name, 1, &altitudeCallback);
+    ground_speed_sub=n.subscribe("/"+drone_id_namespace+"/"+ground_speed_topic_name, 1, &groundSpeedCallback);
 
     //Actuator commands subscribers
-    DronePitchRollCmdSubs=n.subscribe("/"+drone_id_namespace+"/"+DRONE_CONSOLE_INTERFACE_COMMAND_DRONE_COMMAND_PITCH_ROLL_SUBSCRIPTION, 1, &dronePitchRollCmdCallback);
-    DroneDAltitudeCmdSubs=n.subscribe("/"+drone_id_namespace+"/"+DRONE_CONSOLE_INTERFACE_COMMAND_DRONE_COMMAND_DALTITUDE_SUBSCRIPTION, 1, &droneDAltitudeCmdCallback);
-    DroneDYawCmdSubs=n.subscribe("/"+drone_id_namespace+"/"+DRONE_CONSOLE_INTERFACE_COMMAND_DRONE_COMMAND_DYAW_SUBSCRIPTION, 1, &droneDYawCmdCallback);
-    controlModeSub=n.subscribe(std::string("/"+drone_id_namespace + "/controlMode"), 1, &controlModeSubCallback);
-    
+    quadrotor_command_sub = n.subscribe("/"+drone_id_namespace+"/"+quadrotor_command_topic_name, 1, &quadrotorCommandCallback);
+    control_mode_sub=n.subscribe(std::string("/"+drone_id_namespace + "/" +assumed_control_mode_topic_name), 1, &controlModeSubCallback);
+
     //Self localization subscriber
-    drone_estimated_GMR_pose_subscriber= n.subscribe("/"+drone_id_namespace+"/"+DRONE_STATE_ESTIMATOR_INTERFACE_POSE_SUBSCRIPTION_GMR   , 1, &drone_estimated_GMR_pose_callback_function);
-    DroneStatusSubs=n.subscribe("/"+drone_id_namespace+"/"+DRONE_CONSOLE_INTERFACE_SENSOR_STATUS, 1, &droneStatusCallback);
+    self_localization_pose_sub= n.subscribe("/"+drone_id_namespace+"/"+self_localization_pose_topic_name, 1, &selfLocalizationPoseCallback);
+    status_sub=n.subscribe("/"+drone_id_namespace+"/"+status_topic_name, 1, &droneStatusCallback);
     
     //Motion references subscriber
-    drone_position_reference_subscriber= n.subscribe("/"+drone_id_namespace+"/"+DRONE_TRAJECTORY_CONTROLLER_INTERFACE_POSITION_REF_REBROADCAST_SUBSCRIPTION, 1, &droneCurrentPositionRefsSubCallback);
-
-
+    position_reference_subscriber= n.subscribe("/"+drone_id_namespace+"/"+motion_reference_pose_topic_name, 1, &positionRefsCallback);
+    speed_reference_subscriber= n.subscribe("/"+drone_id_namespace+"/"+motion_reference_speed_topic_name, 1, &speedRefsSubCallback);
+    
     //ncurses initialization (output text)
     initscr();
     curs_set(0);
@@ -75,7 +120,7 @@ int main(int argc, char **argv)
     nodelay(stdscr, TRUE);
     erase(); refresh();
 
-    printw("     ----ALPHANUMERIC VIEWER OF AERIAL ROBOTIC PARAMETERS----");
+    printw("         ----ALPHANUMERIC VIEWER OF AERIAL ROBOTIC PARAMETERS----");
 
     //Rate
     ros::Rate loop_rate(8);
@@ -94,26 +139,32 @@ int main(int argc, char **argv)
             printout_stream(pinterface_printout_stream, &lineCommands, &columCommands);
 
             //SELF LOCALIZATION
-            pinterface_printout_stream = getPositionEstimates_GMRwrtGFF_Stream();
+            pinterface_printout_stream = getPositionStream();
             printout_stream(pinterface_printout_stream, &lineCommands, &columCommands);
-            pinterface_printout_stream = getDroneState();
+            pinterface_printout_stream = getQuadrotorState();
             printout_stream(pinterface_printout_stream, &lineCommands, &columCommands);            
         
         //Right column
-        lineCommands=2, columCommands=2*DISPLAY_COLUMN_SIZE+2;
+        lineCommands=2, columCommands=2*DISPLAY_COLUMN_SIZE+8;
 
             //ACTUATOR COMMANDS
-            pinterface_printout_stream = getDroneCommandsStream();
+            pinterface_printout_stream = getQuadrotorCommandsStream();
             printout_stream(pinterface_printout_stream, &lineCommands, &columCommands); 
 
             //Control Mode
             pinterface_printout_stream = getControllerState();
             printout_stream(pinterface_printout_stream, &lineCommands, &columCommands);
 
-            //MOTION REFERENCES
-            pinterface_printout_stream = getPositionReferences_GMRwrtGFF_Stream();
+            //SPEED REFERENCES
+            pinterface_printout_stream = getSpeedReferencesStream();
             printout_stream(pinterface_printout_stream, &lineCommands, &columCommands);
-         
+
+           lineCommands=9, columCommands=1*DISPLAY_COLUMN_SIZE+4;
+            //MOTION REFERENCES
+            pinterface_printout_stream = getPositionReferencesStream();
+            printout_stream(pinterface_printout_stream, &lineCommands, &columCommands);
+
+            
         //Refresh
         refresh();
         loop_rate.sleep();
@@ -142,104 +193,108 @@ std::stringstream *getOdometryStream(){
     interface_printout_stream.str(std::string());
     interface_printout_stream << std::endl
         << "SENSOR MEASUREMENTS" << std::endl
-        << "Battery charge:     " << std::fixed << std::setprecision(0) << BatteryMsgs.batteryPercent <<  "   %%"   << std::endl << std::fixed << std::setprecision(2);
-                    if (AltitudeMsgs.altitude > -0.01){
-                        interface_printout_stream << "Altitude (z):       " << std::setw(5) << std::internal << fabs(AltitudeMsgs.altitude)       << " m"  << std::endl;
+        << "Battery charge:     " << std::fixed << std::setprecision(0) << battery_msg.batteryPercent <<  "   %%"   << std::endl << std::fixed << std::setprecision(2);
+                    if (altitude_msg.altitude > -0.01){
+                        interface_printout_stream << "Altitude (z):       " << std::setw(5) << std::internal << fabs(altitude_msg.altitude)       << " m   "  << std::endl;
                     }else{
-                        interface_printout_stream << "Altitude (z):      " << std::setw(6) << std::internal << AltitudeMsgs.altitude       << " m"  << std::endl;
+                        interface_printout_stream << "Altitude (z):      " << std::setw(6) << std::internal << altitude_msg.altitude       << " m   "  << std::endl;
                     }
 
-                    if (GroundSpeedMsgs.vector.x > -0.01){
-                        interface_printout_stream << "Ground speed (x):   " << std::setw(5) << std::internal << fabs(GroundSpeedMsgs.vector.x)    << " m/sec"  << std::endl;
+                    if (ground_speed_msg.vector.x > -0.01){
+                        interface_printout_stream << "Ground speed (x):   " << std::setw(5) << std::internal << fabs(ground_speed_msg.vector.x)    << " m/sec   "  << std::endl;
                     }else{
-                        interface_printout_stream << "Ground speed (x):  " << std::setw(6) << std::internal << GroundSpeedMsgs.vector.x    << " m/sec"  << std::endl;
+                        interface_printout_stream << "Ground speed (x):  " << std::setw(6) << std::internal << ground_speed_msg.vector.x    << " m/sec   "  << std::endl;
                     }
 
-                    if (GroundSpeedMsgs.vector.y > -0.01){
-                        interface_printout_stream << "Ground speed (y):   " << std::setw(5) << std::internal << fabs(GroundSpeedMsgs.vector.y)    << " m/sec" << std::endl;
+                    if (ground_speed_msg.vector.y > -0.01){
+                        interface_printout_stream << "Ground speed (y):   " << std::setw(5) << std::internal << fabs(ground_speed_msg.vector.y)    << " m/sec   " << std::endl;
                     }else{
-                        interface_printout_stream << "Ground speed (y):  " << std::setw(6) << std::internal << GroundSpeedMsgs.vector.y    << " m/sec" << std::endl;
+                        interface_printout_stream << "Ground speed (y):  " << std::setw(6) << std::internal << ground_speed_msg.vector.y    << " m/sec   " << std::endl;
                     }   
         interface_printout_stream <<  std::endl <<  std::endl;
     return &interface_printout_stream;
 }
 
 //Actuator commands Stream
-std::stringstream *getDroneCommandsStream(){
+std::stringstream *getQuadrotorCommandsStream(){
     interface_printout_stream.clear();
     interface_printout_stream.str(std::string());
     interface_printout_stream
         << "ACTUATOR COMMANDS" << std::endl;
-                    if (DroneDAltitudeCmdMsgs.dAltitudeCmd > -0.01){
-                        interface_printout_stream << "Altitude rate:     " << std::setw(5) << std::internal << fabs(DroneDAltitudeCmdMsgs.dAltitudeCmd) <<  " m/sec"<<std::endl;
+
+                    if (quadrotor_command_msg.thrust.z > -0.01){
+                        interface_printout_stream << "Altitude rate:     " << std::setw(5) << std::internal << fabs(quadrotor_command_msg.thrust.z) <<  " m/sec    "<<std::endl;
                     }else{
-                        interface_printout_stream << "Altitude rate:    " << std::setw(6) << std::internal << DroneDAltitudeCmdMsgs.dAltitudeCmd <<  " m/sec"<<std::endl;
+                        interface_printout_stream << "Altitude rate:    " << std::setw(6) << std::internal << quadrotor_command_msg.thrust.z <<  " m/sec   "<<std::endl;
                     }
 
-                    if (DroneDYawCmdMsgs.dYawCmd > -0.01){
-                        interface_printout_stream << "Yaw rate:          " << std::setw(5) << std::internal << fabs(DroneDYawCmdMsgs.dYawCmd)           <<  " rad/sec" <<std::endl;
+                    if (quadrotor_command_msg.yaw_rate > -0.01){
+                        interface_printout_stream << "Yaw rate:          " << std::setw(5) << std::internal << fabs(quadrotor_command_msg.yaw_rate )           <<  " rad/sec   " <<std::endl;
                     }else{
-                        interface_printout_stream << "Yaw rate:         " << std::setw(6) << std::internal << DroneDYawCmdMsgs.dYawCmd           <<  " rad/sec" <<std::endl;
+                        interface_printout_stream << "Yaw rate:         " << std::setw(6) << std::internal << quadrotor_command_msg.yaw_rate            <<  " rad/sec   " <<std::endl;
                     }
 
-                    if (DronePitchRollCmdMsgs.pitchCmd > -0.01){
-                        interface_printout_stream << "Pitch:             " << std::setw(5) << std::internal << fabs(DronePitchRollCmdMsgs.pitchCmd)     <<  " rad"  <<std::endl;
+                    if (quadrotor_command_msg.pitch > -0.01){
+                        interface_printout_stream << "Pitch:             " << std::setw(5) << std::internal << fabs(quadrotor_command_msg.pitch)     <<  " rad   "  <<std::endl;
                     }else{
-                        interface_printout_stream << "Pitch:            " << std::setw(6) << std::internal << DronePitchRollCmdMsgs.pitchCmd     <<  " rad"  <<std::endl;
+                        interface_printout_stream << "Pitch:            " << std::setw(6) << std::internal << quadrotor_command_msg.pitch     <<  " rad   "  <<std::endl;
                     }
 
 
-                    if (DronePitchRollCmdMsgs.rollCmd > -0.01){
-                        interface_printout_stream << "Roll:              " << std::setw(5) << std::internal << fabs(DronePitchRollCmdMsgs.rollCmd)      <<  " rad"  <<std::endl; 
+                    if (quadrotor_command_msg.roll > -0.01){
+                        interface_printout_stream << "Roll:              " << std::setw(5) << std::internal << fabs(quadrotor_command_msg.roll)      <<  " rad   "  <<std::endl; 
                     }else{
-                        interface_printout_stream << "Roll:             " << std::setw(6) << std::internal << DronePitchRollCmdMsgs.rollCmd      <<  " rad"  <<std::endl; 
+                        interface_printout_stream << "Roll:             " << std::setw(6) << std::internal << quadrotor_command_msg.roll      <<  " rad   "  <<std::endl; 
                     }
     return &interface_printout_stream;
 }
 
 //Self Localization Stream
-std::stringstream *getPositionEstimates_GMRwrtGFF_Stream(){
+std::stringstream *getPositionStream(){
     interface_printout_stream.clear();
     interface_printout_stream.str(std::string());
     interface_printout_stream
         << "SELF LOCALIZATION" << std::endl;
 
-                    if (last_drone_estimated_GMRwrtGFF_pose_msg_.x > -0.01){
-                        interface_printout_stream << "x:       " << std::setw(5) << std::internal << fabs(last_drone_estimated_GMRwrtGFF_pose_msg_.x) << " m" <<std::endl;
+                    if (current_pose.pose.position.x > -0.01){
+                        interface_printout_stream << "x:       " << std::setw(5) << std::internal << fabs(current_pose.pose.position.x) << " m   " <<std::endl;
                     }else{
-                        interface_printout_stream << "x:      " << std::setw(6) << std::internal << last_drone_estimated_GMRwrtGFF_pose_msg_.x << " m" <<std::endl;
+                        interface_printout_stream << "x:      " << std::setw(6) << std::internal << current_pose.pose.position.x << " m   " <<std::endl;
                     }
 
-                    if (last_drone_estimated_GMRwrtGFF_pose_msg_.y > -0.01){
-                        interface_printout_stream  << "y:       " << std::setw(5) << std::internal << fabs(last_drone_estimated_GMRwrtGFF_pose_msg_.y) << " m" << std::endl;
+                    if (current_pose.pose.position.y > -0.01){
+                        interface_printout_stream  << "y:       " << std::setw(5) << std::internal << fabs(current_pose.pose.position.y) << " m   " << std::endl;
                     }else{
-                        interface_printout_stream  << "y:      " << std::setw(6) << std::internal << last_drone_estimated_GMRwrtGFF_pose_msg_.y << " m" << std::endl;
+                        interface_printout_stream  << "y:      " << std::setw(6) << std::internal << current_pose.pose.position.y << " m   " << std::endl;
                     }
 
-                    if (last_drone_estimated_GMRwrtGFF_pose_msg_.z > -0.01){
-                        interface_printout_stream << "z:       " << std::setw(5) << std::internal << fabs(last_drone_estimated_GMRwrtGFF_pose_msg_.z) << " m" <<  std::endl;
+                    if (current_pose.pose.position.z > -0.01){
+                        interface_printout_stream << "z:       " << std::setw(5) << std::internal << fabs(current_pose.pose.position.z) << " m   " <<  std::endl;
                     }else{
-                        interface_printout_stream << "z:      " << std::setw(6) << std::internal << last_drone_estimated_GMRwrtGFF_pose_msg_.z << " m" <<  std::endl;
+                        interface_printout_stream << "z:      " << std::setw(6) << std::internal << current_pose.pose.position.z << " m   " <<  std::endl;
+                    }
+
+                    tf2::Matrix3x3 m(tf2::Quaternion (current_pose.pose.orientation.x,current_pose.pose.orientation.y,current_pose.pose.orientation.z,current_pose.pose.orientation.w));
+                    double r, p, yaw;
+                    m.getRPY(r, p, yaw);
+
+                    if (yaw > -0.01){
+                        interface_printout_stream << "yaw:     " << std::setw(5) << std::internal << fabs(yaw) << " rad   " <<  std::endl; 
+                    }else{
+                        interface_printout_stream << "yaw:    " << std::setw(6) << std::internal << yaw << " rad   " <<  std::endl; 
+                    }
+
+                    if (p > -0.01){
+                        interface_printout_stream << "pitch:   " << std::setw(5) << std::internal << fabs(p) << " rad   " << std::endl;
+                    }else{
+                        interface_printout_stream << "pitch:  " << std::setw(6) << std::internal << p << " rad    " << std::endl;
                     }
 
 
-                    if (last_drone_estimated_GMRwrtGFF_pose_msg_.yaw > -0.01){
-                        interface_printout_stream << "yaw:     " << std::setw(5) << std::internal << fabs(last_drone_estimated_GMRwrtGFF_pose_msg_.yaw) << " rad" <<  std::endl; 
+                    if (r > -0.01){
+                        interface_printout_stream << "roll:    " << std::setw(5) << std::internal << fabs(r) << " rad     " << std::endl;
                     }else{
-                        interface_printout_stream << "yaw:    " << std::setw(6) << std::internal << last_drone_estimated_GMRwrtGFF_pose_msg_.yaw << " rad" <<  std::endl; 
-                    }
-
-                    if (last_drone_estimated_GMRwrtGFF_pose_msg_.pitch > -0.01){
-                        interface_printout_stream << "pitch:   " << std::setw(5) << std::internal << fabs(last_drone_estimated_GMRwrtGFF_pose_msg_.pitch) << " rad" << std::endl;
-                    }else{
-                        interface_printout_stream << "pitch:  " << std::setw(6) << std::internal << last_drone_estimated_GMRwrtGFF_pose_msg_.pitch << " rad" << std::endl;
-                    }
-
-
-                    if (last_drone_estimated_GMRwrtGFF_pose_msg_.roll > -0.01){
-                        interface_printout_stream << "roll:    " << std::setw(5) << std::internal << fabs(last_drone_estimated_GMRwrtGFF_pose_msg_.roll) << " rad" << std::endl;
-                    }else{
-                        interface_printout_stream << "roll:   " << std::setw(6) << std::internal << last_drone_estimated_GMRwrtGFF_pose_msg_.roll << " rad" << std::endl;
+                        interface_printout_stream << "roll:   " << std::setw(6) << std::internal << r << " rad     " << std::endl;
                     }    
     return &interface_printout_stream;
 }
@@ -270,12 +325,12 @@ std::stringstream *getControllerState(){
 }
 
 //Status Stream
-std::stringstream *getDroneState(){
+std::stringstream *getQuadrotorState(){
     interface_printout_stream.clear();
     interface_printout_stream.str(std::string());
     interface_printout_stream
         << "Status:  ";
-    switch (DroneStatusMsgs.status) {
+    switch (quadrotor_status_msg.status) {
         case droneMsgsROS::droneStatus::UNKNOWN:
         interface_printout_stream << "UNKNOWN   " << std::endl;
             break;
@@ -305,47 +360,74 @@ std::stringstream *getDroneState(){
 }
 
 //Motion References Stream
-std::stringstream *getPositionReferences_GMRwrtGFF_Stream(){
+std::stringstream *getPositionReferencesStream(){
     interface_printout_stream.clear();
     interface_printout_stream.str(std::string());
     interface_printout_stream
-        << "MOTION REFERENCES" << std::endl;
-                    if (current_drone_position_reference_.x > -0.01){
-                        interface_printout_stream << "x:       " << std::setw(5) << std::internal << fabs(current_drone_position_reference_.x) << " m" <<std::endl;
+        << "POSITION REFERENCES" << std::endl;
+                    if (current_position_reference.pose.position.x > -0.01){
+                        interface_printout_stream << "x:       " << std::setw(5) << std::internal << fabs(current_position_reference.pose.position.x) << " m    " <<std::endl;
                     }else{
-                        interface_printout_stream << "x:      " << std::setw(6) << std::internal << current_drone_position_reference_.x     << " m" <<std::endl;
+                        interface_printout_stream << "x:      " << std::setw(6) << std::internal << current_position_reference.pose.position.x     << " m    " <<std::endl;
                     }
 
-                    if (current_drone_position_reference_.y > -0.01){
-                        interface_printout_stream  << "y:       " << std::setw(5) << std::internal << fabs(current_drone_position_reference_.y) << " m" <<std::endl;
+                    if (current_position_reference.pose.position.y > -0.01){
+                        interface_printout_stream  << "y:       " << std::setw(5) << std::internal << fabs(current_position_reference.pose.position.y) << " m   " <<std::endl;
                     }else{
-                        interface_printout_stream  << "y:      " << std::setw(6) << std::internal << current_drone_position_reference_.y     << " m" <<std::endl;
+                        interface_printout_stream  << "y:      " << std::setw(6) << std::internal << current_position_reference.pose.position.y     << " m   " <<std::endl;
                     }
 
-                    if (current_drone_position_reference_.z > -0.01){
-                        interface_printout_stream << "z:       " << std::setw(5) << std::internal << fabs(current_drone_position_reference_.z) << " m" <<std::endl;
+                    if (current_position_reference.pose.position.z > -0.01){
+                        interface_printout_stream << "z:       " << std::setw(5) << std::internal << fabs(current_position_reference.pose.position.z) << " m   " <<std::endl;
                     }else{
-                        interface_printout_stream << "z:      " << std::setw(6) << std::internal << current_drone_position_reference_.z     << " m" <<std::endl;
+                        interface_printout_stream << "z:      " << std::setw(6) << std::internal << current_position_reference.pose.position.z     << " m   " <<std::endl;
                     }
 
-
-                    if (current_drone_position_reference_.yaw > -0.01){
-                        interface_printout_stream << "yaw:     " << std::setw(5) << std::internal << fabs(current_drone_position_reference_.yaw) << " rad" <<std::endl; 
-                    }else{
-                        interface_printout_stream << "yaw:    " << std::setw(6) << std::internal << current_drone_position_reference_.yaw   << " rad" <<std::endl; 
+                    tf2::Matrix3x3 m(tf2::Quaternion (current_position_reference.pose.orientation.x,current_position_reference.pose.orientation.y,current_position_reference.pose.orientation.z,current_position_reference.pose.orientation.w));
+                    double r, p, yaw = 0;
+                    m.getRPY(r, p, yaw);
+                    if (isnan(yaw)){
+                        yaw = 0.0;
                     }
 
-                    if (current_drone_position_reference_.pitch > -0.01){
-                        interface_printout_stream << "pitch:   " << std::setw(5) << std::internal << fabs(current_drone_position_reference_.pitch) << " rad" <<std::endl;
+                    if (yaw > -0.01){
+                        interface_printout_stream << "yaw:     " << std::setw(5) << std::internal << fabs(yaw) << " rad   " <<std::endl; 
                     }else{
-                        interface_printout_stream << "pitch:  " << std::setw(6) << std::internal << current_drone_position_reference_.pitch << " rad" <<std::endl;
+                        interface_printout_stream << "yaw:    " << std::setw(6) << std::internal << yaw   << " rad   " <<std::endl; 
                     }
 
+    return &interface_printout_stream;
+}
 
-                    if (current_drone_position_reference_.roll > -0.01){
-                        interface_printout_stream << "roll:    " << std::setw(5) << std::internal << fabs(current_drone_position_reference_.roll) << " rad" <<std::endl;
+//Motion Speed References Stream
+std::stringstream *getSpeedReferencesStream(){
+    interface_printout_stream.clear();
+    interface_printout_stream.str(std::string());
+    interface_printout_stream
+        << "SPEED REFERENCES" << std::endl;
+                    if (current_speed_reference.twist.linear.x > -0.01){
+                        interface_printout_stream << "dx:       " << std::setw(5) << std::internal << fabs(current_speed_reference.twist.linear.x) << " m/sec   " <<std::endl;
                     }else{
-                        interface_printout_stream << "roll:   " << std::setw(6) << std::internal << current_drone_position_reference_.roll  << " rad" <<std::endl;
+                        interface_printout_stream << "dx:      " << std::setw(6) << std::internal << current_speed_reference.twist.linear.x     << " m/sec   " <<std::endl;
+                    }
+
+                    if (current_speed_reference.twist.linear.y > -0.01){
+                        interface_printout_stream  << "dy:       " << std::setw(5) << std::internal << fabs(current_speed_reference.twist.linear.y) << " m/sec   " <<std::endl;
+                    }else{
+                        interface_printout_stream  << "dy:      " << std::setw(6) << std::internal << current_speed_reference.twist.linear.y    << " m/sec    " <<std::endl;
+                    }
+
+                    if (current_speed_reference.twist.linear.z > -0.01){
+                        interface_printout_stream << "dz:       " << std::setw(5) << std::internal << current_speed_reference.twist.linear.z << " m/sec    " <<std::endl;
+                    }else{
+                        interface_printout_stream << "dz:      " << std::setw(6) << std::internal << current_speed_reference.twist.linear.z     << " m/sec    " <<std::endl;
+                    }
+
+                    if (current_speed_reference.twist.angular.z > -0.01){
+                        interface_printout_stream << "dyaw:     " << std::setw(5) << std::internal << fabs(current_speed_reference.twist.angular.z) << " rad   " <<std::endl; 
+                    }else{
+                        interface_printout_stream << "dyaw:    " << std::setw(6) << std::internal << current_speed_reference.twist.angular.z   << " rad    " <<std::endl; 
                     }
     return &interface_printout_stream;
 }
+

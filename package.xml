@@ -2,10 +2,10 @@
 	<name>alphanumeric_viewer</name>
 	<version>1.0.0</version>
 	<description>
-    		Simple alphanumeric viewer.
+    		Alphanumeric viewer package
 	</description>
-	<author email="a.rodelgo@alumnos.fi.upm.es">Alberto Rodelgo Perales</author>
-	<maintainer email="a.rodelgo@alumnos.upm.es">Alberto Rodelgo Perales</maintainer>
+	<author email="rodelgo7al@gmail.com">Alberto Rodelgo Perales</author>
+	<maintainer email="rodelgo7al@gmail.com">Alberto Rodelgo Perales</maintainer>
   	<license>BSD-3</license>
 	<url></url>
 

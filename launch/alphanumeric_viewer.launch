@@ -1,10 +1,24 @@
-<!-- Launches: droneInterface -->
+<!-- Launches: alphanumeric_viewer -->
 <launch>
 	
 	<arg name="drone_id_namespace"  default="drone1" />
 	<arg name="drone_id_int" 	default="1" />
 	<arg name="my_stack_directory" 	default="$(env AEROSTACK_STACK)" />
 
+	<arg name="battery_topic_name" 	default="battery" />
+	<arg name="altitude_topic_name" 	default="altitude" />
+	<arg name="ground_speed_topic_name" 	default="ground_speed" />
+	<arg name="quadrotor_command_topic_name" 	default="actuator_command/quadrotor_command" />
+	<arg name="assumed_control_mode_topic_name" 	default="motion_reference/assumed_control_mode" />
+	<arg name="status_topic_name" 	default="status" />
+	<arg name="self_localization_pose_topic_name" 	default="self_localization/pose" />
+	<arg name="motion_reference_speed_topic_name" 	default="motion_reference/speed" />
+	<arg name="motion_reference_pose_topic_name" 	default="motion_reference/pose" />
+
+	
+
+
+	
 	<!--Opened window topic-->
     <arg name="window_opened" default="window_opened"/>
 
@@ -15,6 +29,15 @@
 		<node name="alphanumeric_viewer" pkg="alphanumeric_viewer" type="alphanumeric_viewer" output="screen">
 			<param name="droneId" value="$(arg drone_id_int)" type="int"/>
 			<param name="stackPath" value="$(arg my_stack_directory)" type="string"/>
+			<param name="battery_topic_name" value="$(arg battery_topic_name)" type="string"/>
+			<param name="altitude_topic_name" value="$(arg altitude_topic_name)" type="string"/>
+			<param name="ground_speed_topic_name" value="$(arg ground_speed_topic_name)" type="string"/>
+			<param name="quadrotor_command_topic_name" value="$(arg quadrotor_command_topic_name)" type="string"/>
+			<param name="assumed_control_mode_topic_name" value="$(arg assumed_control_mode_topic_name)" type="string"/>
+			<param name="status_topic_name" value="$(arg status_topic_name)" type="string"/>
+			<param name="self_localization_pose_topic_name" value="$(arg self_localization_pose_topic_name)" type="string"/>
+			<param name="motion_reference_speed_topic_name" value="$(arg motion_reference_speed_topic_name)" type="string"/>
+			<param name="motion_reference_pose_topic_name" value="$(arg motion_reference_pose_topic_name)" type="string"/>
 		</node>
 
 		<!--Opened window topic-->

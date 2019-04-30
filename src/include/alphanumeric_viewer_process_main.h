@@ -43,10 +43,13 @@
 #include <curses.h>
 #include <iostream>
 #include <string>
+#include <math.h> 
 
 //ROS
 #include "ros/ros.h"
 #include "geometry_msgs/Vector3Stamped.h"
+#include "geometry_msgs/PoseStamped.h"
+#include "geometry_msgs/TwistStamped.h"
 #include "droneMsgsROS/battery.h"
 #include "droneMsgsROS/droneAltitude.h"
 #include "droneMsgsROS/vector2Stamped.h"
@@ -64,61 +67,73 @@
 #include "droneMsgsROS/droneYawRefCommand.h"
 #include "droneMsgsROS/droneAltitudeCmd.h"
 #include "communication_definition.h"
-
+#include "mav_msgs/RollPitchYawrateThrust.h" 
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+#include "aerostack_msgs/FlightMotionControlMode.h"
 
 //Column size
 #define DISPLAY_COLUMN_SIZE 19
 
 //MsgsROS
-droneMsgsROS::dronePitchRollCmd DronePitchRollCmdMsgs;
-droneMsgsROS::droneDAltitudeCmd DroneDAltitudeCmdMsgs;
-droneMsgsROS::droneDYawCmd DroneDYawCmdMsgs;
-droneMsgsROS::battery BatteryMsgs;
-droneMsgsROS::droneAltitude AltitudeMsgs;
-droneMsgsROS::vector2Stamped GroundSpeedMsgs;
-droneMsgsROS::droneStatus DroneStatusMsgs;
-droneMsgsROS::dronePose last_drone_estimated_GMRwrtGFF_pose_msg_;
-droneMsgsROS::dronePose current_drone_position_reference_;
-
+droneMsgsROS::battery battery_msg;
+droneMsgsROS::droneAltitude altitude_msg;
+droneMsgsROS::vector2Stamped ground_speed_msg;
+droneMsgsROS::droneStatus quadrotor_status_msg;
+geometry_msgs::PoseStamped current_pose;;
+geometry_msgs::PoseStamped current_position_reference;
+geometry_msgs::TwistStamped current_speed_reference;
+mav_msgs::RollPitchYawrateThrust quadrotor_command_msg;
 Controller_MidLevel_controlMode::controlMode last_received_control_mode;
 
 //Subscribers
-ros::Subscriber drone_estimated_GMR_pose_subscriber;
-ros::Subscriber BatterySubs;
-ros::Subscriber AltitudeSubs;
-ros::Subscriber GroundSpeedSubs;
-ros::Subscriber DroneStatusSubs;
-ros::Subscriber DronePitchRollCmdSubs;
-ros::Subscriber DroneDAltitudeCmdSubs;
-ros::Subscriber DroneDYawCmdSubs;
-ros::Subscriber controlModeSub;
-ros::Subscriber drone_position_reference_subscriber;
+ros::Subscriber self_localization_pose_sub;
+ros::Subscriber battery_sub;
+ros::Subscriber altitude_sub;
+ros::Subscriber ground_speed_sub;
+ros::Subscriber status_sub;
+ros::Subscriber quadrotor_command_sub;
+ros::Subscriber control_mode_sub;
+ros::Subscriber position_reference_subscriber;
+ros::Subscriber speed_reference_subscriber;
     
 //Variables
 std::stringstream interface_printout_stream;
 std::stringstream *pinterface_printout_stream;
 std::string drone_id_namespace;
 
+//Topics 
+std::string battery_topic_name;
+std::string altitude_topic_name;
+std::string ground_speed_topic_name;
+std::string quadrotor_command_topic_name;
+std::string assumed_control_mode_topic_name;
+std::string status_topic_name;
+std::string self_localization_pose_topic_name;
+std::string motion_reference_speed_topic_name;
+std::string motion_reference_pose_topic_name;
+
 //Print-Stream Functions
 void printout_stream( std::stringstream *pinterface_printout_stream, int *lineCommands, int *columCommands);
 std::stringstream *getOdometryStream();
-std::stringstream *getDroneCommandsStream();
-std::stringstream *getPositionEstimates_GMRwrtGFF_Stream();
-std::stringstream *getDroneState();
+std::stringstream *getQuadrotorCommandsStream();
+std::stringstream *getPositionReferencesStream();
+std::stringstream *getQuadrotorState();
 std::stringstream *getControllerState();
-std::stringstream *getPositionReferences_GMRwrtGFF_Stream();
+std::stringstream *getPositionStream();
+std::stringstream *getSpeedReferencesStream();
 
 //Callback Functions
-void drone_estimated_GMR_pose_callback_function(const  droneMsgsROS::dronePose  &msg) { last_drone_estimated_GMRwrtGFF_pose_msg_  = (msg); }
-void batteryCallback(const droneMsgsROS::battery::ConstPtr& msg){ BatteryMsgs=*msg;}
-void altitudeCallback(const droneMsgsROS::droneAltitude::ConstPtr& msg){AltitudeMsgs=*msg;}
-void groundSpeedCallback(const droneMsgsROS::vector2Stamped::ConstPtr& msg){GroundSpeedMsgs=*msg;}
-void droneStatusCallback(const droneMsgsROS::droneStatus::ConstPtr& msg){DroneStatusMsgs=*msg;}
-void dronePitchRollCmdCallback(const droneMsgsROS::dronePitchRollCmd::ConstPtr& msg){DronePitchRollCmdMsgs=*msg;}
-void droneDAltitudeCmdCallback(const droneMsgsROS::droneDAltitudeCmd::ConstPtr& msg){DroneDAltitudeCmdMsgs=*msg;}
-void droneDYawCmdCallback(const droneMsgsROS::droneDYawCmd::ConstPtr& msg){DroneDYawCmdMsgs=*msg;}
-void droneCurrentPositionRefsSubCallback(const droneMsgsROS::dronePose::ConstPtr &msg) {current_drone_position_reference_ = (*msg);}
-void controlModeSubCallback(const droneMsgsROS::droneTrajectoryControllerControlMode::ConstPtr &msg) {
+void selfLocalizationPoseCallback(const geometry_msgs::PoseStamped &msg) { current_pose  = (msg); }
+void batteryCallback(const droneMsgsROS::battery::ConstPtr& msg){ battery_msg=*msg;}
+void altitudeCallback(const droneMsgsROS::droneAltitude::ConstPtr& msg){altitude_msg=*msg;}
+void groundSpeedCallback(const droneMsgsROS::vector2Stamped::ConstPtr& msg){ground_speed_msg=*msg;}
+void droneStatusCallback(const droneMsgsROS::droneStatus::ConstPtr& msg){quadrotor_status_msg=*msg;}
+void quadrotorCommandCallback(const mav_msgs::RollPitchYawrateThrust::ConstPtr& msg){quadrotor_command_msg=*msg;}
+
+void positionRefsCallback(const geometry_msgs::PoseStamped::ConstPtr &msg) {current_position_reference = (*msg);}
+void speedRefsSubCallback(const geometry_msgs::TwistStamped::ConstPtr &msg) {current_speed_reference = (*msg);}
+void controlModeSubCallback(const aerostack_msgs::FlightMotionControlMode::ConstPtr &msg) {
     switch (msg->command) {
     case Controller_MidLevel_controlMode::TRAJECTORY_CONTROL:
         last_received_control_mode = Controller_MidLevel_controlMode::TRAJECTORY_CONTROL;
