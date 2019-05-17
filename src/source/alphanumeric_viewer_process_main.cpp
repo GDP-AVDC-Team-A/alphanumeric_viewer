@@ -195,21 +195,21 @@ std::stringstream *getOdometryStream(){
         << "SENSOR MEASUREMENTS" << std::endl
         << "Battery charge:     " << std::fixed << std::setprecision(0) << battery_msg.batteryPercent <<  "   %%"   << std::endl << std::fixed << std::setprecision(2);
                     if (altitude_msg.altitude > -0.01){
-                        interface_printout_stream << "Altitude (z):       " << std::setw(5) << std::internal << fabs(altitude_msg.altitude)       << " m   "  << std::endl;
+                        interface_printout_stream << "Altitude (z):       " << std::setw(5) << std::internal << fabs(altitude_msg.altitude)       << " m  "  << std::endl;
                     }else{
-                        interface_printout_stream << "Altitude (z):      " << std::setw(6) << std::internal << altitude_msg.altitude       << " m   "  << std::endl;
+                        interface_printout_stream << "Altitude (z):      " << std::setw(6) << std::internal << altitude_msg.altitude       << " m  "  << std::endl;
                     }
 
                     if (ground_speed_msg.vector.x > -0.01){
-                        interface_printout_stream << "Ground speed (x):   " << std::setw(5) << std::internal << fabs(ground_speed_msg.vector.x)    << " m/sec   "  << std::endl;
+                        interface_printout_stream << "Ground speed (x):   " << std::setw(5) << std::internal << fabs(ground_speed_msg.vector.x)    << " m/sec  "  << std::endl;
                     }else{
-                        interface_printout_stream << "Ground speed (x):  " << std::setw(6) << std::internal << ground_speed_msg.vector.x    << " m/sec   "  << std::endl;
+                        interface_printout_stream << "Ground speed (x):  " << std::setw(6) << std::internal << ground_speed_msg.vector.x    << " m/sec  "  << std::endl;
                     }
 
                     if (ground_speed_msg.vector.y > -0.01){
-                        interface_printout_stream << "Ground speed (y):   " << std::setw(5) << std::internal << fabs(ground_speed_msg.vector.y)    << " m/sec   " << std::endl;
+                        interface_printout_stream << "Ground speed (y):   " << std::setw(5) << std::internal << fabs(ground_speed_msg.vector.y)    << " m/sec  " << std::endl;
                     }else{
-                        interface_printout_stream << "Ground speed (y):  " << std::setw(6) << std::internal << ground_speed_msg.vector.y    << " m/sec   " << std::endl;
+                        interface_printout_stream << "Ground speed (y):  " << std::setw(6) << std::internal << ground_speed_msg.vector.y    << " m/sec  " << std::endl;
                     }   
         interface_printout_stream <<  std::endl <<  std::endl;
     return &interface_printout_stream;
@@ -223,28 +223,28 @@ std::stringstream *getQuadrotorCommandsStream(){
         << "ACTUATOR COMMANDS" << std::endl;
 
                     if (quadrotor_command_msg.thrust.z > -0.01){
-                        interface_printout_stream << "Altitude rate:     " << std::setw(5) << std::internal << fabs(quadrotor_command_msg.thrust.z) <<  " m/sec    "<<std::endl;
+                        interface_printout_stream << "Altitude rate:     " << std::setw(5) << std::internal << fabs(quadrotor_command_msg.thrust.z) <<  " m/sec  "<<std::endl;
                     }else{
-                        interface_printout_stream << "Altitude rate:    " << std::setw(6) << std::internal << quadrotor_command_msg.thrust.z <<  " m/sec   "<<std::endl;
+                        interface_printout_stream << "Altitude rate:    " << std::setw(6) << std::internal << quadrotor_command_msg.thrust.z <<  " m/sec  "<<std::endl;
                     }
 
                     if (quadrotor_command_msg.yaw_rate > -0.01){
-                        interface_printout_stream << "Yaw rate:          " << std::setw(5) << std::internal << fabs(quadrotor_command_msg.yaw_rate )           <<  " rad/sec   " <<std::endl;
+                        interface_printout_stream << "Yaw rate:          " << std::setw(5) << std::internal << fabs(quadrotor_command_msg.yaw_rate )           <<  " rad/sec  " <<std::endl;
                     }else{
-                        interface_printout_stream << "Yaw rate:         " << std::setw(6) << std::internal << quadrotor_command_msg.yaw_rate            <<  " rad/sec   " <<std::endl;
+                        interface_printout_stream << "Yaw rate:         " << std::setw(6) << std::internal << quadrotor_command_msg.yaw_rate            <<  " rad/sec  " <<std::endl;
                     }
 
                     if (quadrotor_command_msg.pitch > -0.01){
-                        interface_printout_stream << "Pitch:             " << std::setw(5) << std::internal << fabs(quadrotor_command_msg.pitch)     <<  " rad   "  <<std::endl;
+                        interface_printout_stream << "Pitch:             " << std::setw(5) << std::internal << fabs(quadrotor_command_msg.pitch)     <<  " rad  "  <<std::endl;
                     }else{
-                        interface_printout_stream << "Pitch:            " << std::setw(6) << std::internal << quadrotor_command_msg.pitch     <<  " rad   "  <<std::endl;
+                        interface_printout_stream << "Pitch:            " << std::setw(6) << std::internal << quadrotor_command_msg.pitch     <<  " rad  "  <<std::endl;
                     }
 
 
                     if (quadrotor_command_msg.roll > -0.01){
-                        interface_printout_stream << "Roll:              " << std::setw(5) << std::internal << fabs(quadrotor_command_msg.roll)      <<  " rad   "  <<std::endl; 
+                        interface_printout_stream << "Roll:              " << std::setw(5) << std::internal << fabs(quadrotor_command_msg.roll)      <<  " rad  "  <<std::endl; 
                     }else{
-                        interface_printout_stream << "Roll:             " << std::setw(6) << std::internal << quadrotor_command_msg.roll      <<  " rad   "  <<std::endl; 
+                        interface_printout_stream << "Roll:             " << std::setw(6) << std::internal << quadrotor_command_msg.roll      <<  " rad  "  <<std::endl; 
                     }
     return &interface_printout_stream;
 }
@@ -257,44 +257,48 @@ std::stringstream *getPositionStream(){
         << "SELF LOCALIZATION" << std::endl;
 
                     if (current_pose.pose.position.x > -0.01){
-                        interface_printout_stream << "x:       " << std::setw(5) << std::internal << fabs(current_pose.pose.position.x) << " m   " <<std::endl;
+                        interface_printout_stream << "x:       " << std::setw(5) << std::internal << fabs(current_pose.pose.position.x) << " m  " <<std::endl;
                     }else{
-                        interface_printout_stream << "x:      " << std::setw(6) << std::internal << current_pose.pose.position.x << " m   " <<std::endl;
+                        interface_printout_stream << "x:      " << std::setw(6) << std::internal << current_pose.pose.position.x << " m  " <<std::endl;
                     }
 
                     if (current_pose.pose.position.y > -0.01){
-                        interface_printout_stream  << "y:       " << std::setw(5) << std::internal << fabs(current_pose.pose.position.y) << " m   " << std::endl;
+                        interface_printout_stream  << "y:       " << std::setw(5) << std::internal << fabs(current_pose.pose.position.y) << " m  " << std::endl;
                     }else{
-                        interface_printout_stream  << "y:      " << std::setw(6) << std::internal << current_pose.pose.position.y << " m   " << std::endl;
+                        interface_printout_stream  << "y:      " << std::setw(6) << std::internal << current_pose.pose.position.y << " m  " << std::endl;
                     }
 
                     if (current_pose.pose.position.z > -0.01){
-                        interface_printout_stream << "z:       " << std::setw(5) << std::internal << fabs(current_pose.pose.position.z) << " m   " <<  std::endl;
+                        interface_printout_stream << "z:       " << std::setw(5) << std::internal << fabs(current_pose.pose.position.z) << " m  " <<  std::endl;
                     }else{
-                        interface_printout_stream << "z:      " << std::setw(6) << std::internal << current_pose.pose.position.z << " m   " <<  std::endl;
+                        interface_printout_stream << "z:      " << std::setw(6) << std::internal << current_pose.pose.position.z << " m  " <<  std::endl;
                     }
 
                     tf2::Matrix3x3 m(tf2::Quaternion (current_pose.pose.orientation.x,current_pose.pose.orientation.y,current_pose.pose.orientation.z,current_pose.pose.orientation.w));
                     double r, p, yaw;
                     m.getRPY(r, p, yaw);
+                    
+                    if (isnan(yaw)) yaw = 0.0;
+                    if (isnan(r)) r = 0.0;
+                    if (isnan(p)) p = 0.0;
 
                     if (yaw > -0.01){
-                        interface_printout_stream << "yaw:     " << std::setw(5) << std::internal << fabs(yaw) << " rad   " <<  std::endl; 
+                        interface_printout_stream << "yaw:     " << std::setw(5) << std::internal << fabs(yaw) << " rad  " <<  std::endl; 
                     }else{
-                        interface_printout_stream << "yaw:    " << std::setw(6) << std::internal << yaw << " rad   " <<  std::endl; 
+                        interface_printout_stream << "yaw:    " << std::setw(6) << std::internal << yaw << " rad  " <<  std::endl; 
                     }
 
                     if (p > -0.01){
-                        interface_printout_stream << "pitch:   " << std::setw(5) << std::internal << fabs(p) << " rad   " << std::endl;
+                        interface_printout_stream << "pitch:   " << std::setw(5) << std::internal << fabs(p) << " rad  " << std::endl;
                     }else{
                         interface_printout_stream << "pitch:  " << std::setw(6) << std::internal << p << " rad    " << std::endl;
                     }
 
 
                     if (r > -0.01){
-                        interface_printout_stream << "roll:    " << std::setw(5) << std::internal << fabs(r) << " rad     " << std::endl;
+                        interface_printout_stream << "roll:    " << std::setw(5) << std::internal << fabs(r) << " rad  " << std::endl;
                     }else{
-                        interface_printout_stream << "roll:   " << std::setw(6) << std::internal << r << " rad     " << std::endl;
+                        interface_printout_stream << "roll:   " << std::setw(6) << std::internal << r << " rad  " << std::endl;
                     }    
     return &interface_printout_stream;
 }
@@ -306,18 +310,21 @@ std::stringstream *getControllerState(){
     interface_printout_stream
         << "Control mode:      ";
     switch (last_received_control_mode) {
-    case Controller_MidLevel_controlMode::SPEED_CONTROL:
-        interface_printout_stream << "SPEED     " << std::endl;
+    case aerostack_msgs::QuadrotorPidControllerMode::SPEED:
+        interface_printout_stream << "SPEED        " << std::endl;
         break;
-    case Controller_MidLevel_controlMode::POSITION_CONTROL:
-        interface_printout_stream << "POSITION  " << std::endl;
+    case aerostack_msgs::QuadrotorPidControllerMode::POSE:
+        interface_printout_stream << "POSITION     " << std::endl;
         break;
-    case Controller_MidLevel_controlMode::TRAJECTORY_CONTROL:
-        interface_printout_stream << "TRAJECTORY" << std::endl;
+    case aerostack_msgs::QuadrotorPidControllerMode::GROUND_SPEED:
+        interface_printout_stream << "GROUND SPEED " << std::endl;
         break;
-     case Controller_MidLevel_controlMode::UNKNOWN_CONTROL_MODE:
+    case aerostack_msgs::QuadrotorPidControllerMode::SPEED_3D:
+        interface_printout_stream << "SPEED 3D     " << std::endl;
+        break;        
+     case aerostack_msgs::QuadrotorPidControllerMode::UNKNOWN:
     default:
-        interface_printout_stream << "UNKNOWN   " << std::endl;
+        interface_printout_stream << "UNKNOWN      " << std::endl;
         break;
     }
     interface_printout_stream << std::endl;
@@ -366,21 +373,21 @@ std::stringstream *getPositionReferencesStream(){
     interface_printout_stream
         << "POSITION REFERENCES" << std::endl;
                     if (current_position_reference.pose.position.x > -0.01){
-                        interface_printout_stream << "x:       " << std::setw(5) << std::internal << fabs(current_position_reference.pose.position.x) << " m    " <<std::endl;
+                        interface_printout_stream << "x:       " << std::setw(5) << std::internal << fabs(current_position_reference.pose.position.x) << " m  " <<std::endl;
                     }else{
-                        interface_printout_stream << "x:      " << std::setw(6) << std::internal << current_position_reference.pose.position.x     << " m    " <<std::endl;
+                        interface_printout_stream << "x:      " << std::setw(6) << std::internal << current_position_reference.pose.position.x     << " m  " <<std::endl;
                     }
 
                     if (current_position_reference.pose.position.y > -0.01){
-                        interface_printout_stream  << "y:       " << std::setw(5) << std::internal << fabs(current_position_reference.pose.position.y) << " m   " <<std::endl;
+                        interface_printout_stream  << "y:       " << std::setw(5) << std::internal << fabs(current_position_reference.pose.position.y) << " m  " <<std::endl;
                     }else{
-                        interface_printout_stream  << "y:      " << std::setw(6) << std::internal << current_position_reference.pose.position.y     << " m   " <<std::endl;
+                        interface_printout_stream  << "y:      " << std::setw(6) << std::internal << current_position_reference.pose.position.y     << " m  " <<std::endl;
                     }
 
                     if (current_position_reference.pose.position.z > -0.01){
-                        interface_printout_stream << "z:       " << std::setw(5) << std::internal << fabs(current_position_reference.pose.position.z) << " m   " <<std::endl;
+                        interface_printout_stream << "z:       " << std::setw(5) << std::internal << fabs(current_position_reference.pose.position.z) << " m  " <<std::endl;
                     }else{
-                        interface_printout_stream << "z:      " << std::setw(6) << std::internal << current_position_reference.pose.position.z     << " m   " <<std::endl;
+                        interface_printout_stream << "z:      " << std::setw(6) << std::internal << current_position_reference.pose.position.z     << " m  " <<std::endl;
                     }
 
                     tf2::Matrix3x3 m(tf2::Quaternion (current_position_reference.pose.orientation.x,current_position_reference.pose.orientation.y,current_position_reference.pose.orientation.z,current_position_reference.pose.orientation.w));
@@ -391,9 +398,9 @@ std::stringstream *getPositionReferencesStream(){
                     }
 
                     if (yaw > -0.01){
-                        interface_printout_stream << "yaw:     " << std::setw(5) << std::internal << fabs(yaw) << " rad   " <<std::endl; 
+                        interface_printout_stream << "yaw:     " << std::setw(5) << std::internal << fabs(yaw) << " rad  " <<std::endl; 
                     }else{
-                        interface_printout_stream << "yaw:    " << std::setw(6) << std::internal << yaw   << " rad   " <<std::endl; 
+                        interface_printout_stream << "yaw:    " << std::setw(6) << std::internal << yaw   << " rad  " <<std::endl; 
                     }
 
     return &interface_printout_stream;
@@ -406,27 +413,27 @@ std::stringstream *getSpeedReferencesStream(){
     interface_printout_stream
         << "SPEED REFERENCES" << std::endl;
                     if (current_speed_reference.twist.linear.x > -0.01){
-                        interface_printout_stream << "dx:       " << std::setw(5) << std::internal << fabs(current_speed_reference.twist.linear.x) << " m/sec   " <<std::endl;
+                        interface_printout_stream << "dx:       " << std::setw(5) << std::internal << fabs(current_speed_reference.twist.linear.x) << " m/sec  " <<std::endl;
                     }else{
-                        interface_printout_stream << "dx:      " << std::setw(6) << std::internal << current_speed_reference.twist.linear.x     << " m/sec   " <<std::endl;
+                        interface_printout_stream << "dx:      " << std::setw(6) << std::internal << current_speed_reference.twist.linear.x     << " m/sec  " <<std::endl;
                     }
 
                     if (current_speed_reference.twist.linear.y > -0.01){
-                        interface_printout_stream  << "dy:       " << std::setw(5) << std::internal << fabs(current_speed_reference.twist.linear.y) << " m/sec   " <<std::endl;
+                        interface_printout_stream  << "dy:       " << std::setw(5) << std::internal << fabs(current_speed_reference.twist.linear.y) << " m/sec  " <<std::endl;
                     }else{
-                        interface_printout_stream  << "dy:      " << std::setw(6) << std::internal << current_speed_reference.twist.linear.y    << " m/sec    " <<std::endl;
+                        interface_printout_stream  << "dy:      " << std::setw(6) << std::internal << current_speed_reference.twist.linear.y    << " m/sec  " <<std::endl;
                     }
 
                     if (current_speed_reference.twist.linear.z > -0.01){
-                        interface_printout_stream << "dz:       " << std::setw(5) << std::internal << current_speed_reference.twist.linear.z << " m/sec    " <<std::endl;
+                        interface_printout_stream << "dz:       " << std::setw(5) << std::internal << current_speed_reference.twist.linear.z << " m/sec  " <<std::endl;
                     }else{
-                        interface_printout_stream << "dz:      " << std::setw(6) << std::internal << current_speed_reference.twist.linear.z     << " m/sec    " <<std::endl;
+                        interface_printout_stream << "dz:      " << std::setw(6) << std::internal << current_speed_reference.twist.linear.z     << " m/sec  " <<std::endl;
                     }
 
                     if (current_speed_reference.twist.angular.z > -0.01){
-                        interface_printout_stream << "dyaw:     " << std::setw(5) << std::internal << fabs(current_speed_reference.twist.angular.z) << " rad   " <<std::endl; 
+                        interface_printout_stream << "dyaw:     " << std::setw(5) << std::internal << fabs(current_speed_reference.twist.angular.z) << " rad  " <<std::endl; 
                     }else{
-                        interface_printout_stream << "dyaw:    " << std::setw(6) << std::internal << current_speed_reference.twist.angular.z   << " rad    " <<std::endl; 
+                        interface_printout_stream << "dyaw:    " << std::setw(6) << std::internal << current_speed_reference.twist.angular.z   << " rad  " <<std::endl; 
                     }
     return &interface_printout_stream;
 }

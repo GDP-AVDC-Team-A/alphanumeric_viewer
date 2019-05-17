@@ -58,8 +58,8 @@
 #include "droneMsgsROS/droneDYawCmd.h"
 #include "droneMsgsROS/droneDAltitudeCmd.h"
 #include "droneMsgsROS/droneCommand.h"
-#include "control/Controller_MidLevel_controlModes.h"
-#include "droneMsgsROS/setControlMode.h"
+#include "aerostack_msgs/SetControlMode.h"
+#include "aerostack_msgs/QuadrotorPidControllerMode.h"
 #include "droneMsgsROS/dronePose.h"
 #include "droneMsgsROS/droneSpeeds.h"
 #include "droneMsgsROS/dronePositionTrajectoryRefCommand.h"
@@ -70,7 +70,6 @@
 #include "mav_msgs/RollPitchYawrateThrust.h" 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
-#include "aerostack_msgs/FlightMotionControlMode.h"
 
 //Column size
 #define DISPLAY_COLUMN_SIZE 19
@@ -84,7 +83,7 @@ geometry_msgs::PoseStamped current_pose;;
 geometry_msgs::PoseStamped current_position_reference;
 geometry_msgs::TwistStamped current_speed_reference;
 mav_msgs::RollPitchYawrateThrust quadrotor_command_msg;
-Controller_MidLevel_controlMode::controlMode last_received_control_mode;
+int last_received_control_mode;
 
 //Subscribers
 ros::Subscriber self_localization_pose_sub;
@@ -133,21 +132,11 @@ void quadrotorCommandCallback(const mav_msgs::RollPitchYawrateThrust::ConstPtr& 
 
 void positionRefsCallback(const geometry_msgs::PoseStamped::ConstPtr &msg) {current_position_reference = (*msg);}
 void speedRefsSubCallback(const geometry_msgs::TwistStamped::ConstPtr &msg) {current_speed_reference = (*msg);}
-void controlModeSubCallback(const aerostack_msgs::FlightMotionControlMode::ConstPtr &msg) {
-    switch (msg->command) {
-    case Controller_MidLevel_controlMode::TRAJECTORY_CONTROL:
-        last_received_control_mode = Controller_MidLevel_controlMode::TRAJECTORY_CONTROL;
-        break;
-    case Controller_MidLevel_controlMode::POSITION_CONTROL:
-        last_received_control_mode = Controller_MidLevel_controlMode::POSITION_CONTROL;
-        break;
-    case Controller_MidLevel_controlMode::SPEED_CONTROL:
-        last_received_control_mode = Controller_MidLevel_controlMode::SPEED_CONTROL;
-        break;
-    default:
-        last_received_control_mode = Controller_MidLevel_controlMode::UNKNOWN_CONTROL_MODE;
-        break;
+void controlModeSubCallback(const aerostack_msgs::QuadrotorPidControllerMode::ConstPtr &msg) { 
+    if(msg->command <1 || msg->command >4 ){
+        last_received_control_mode = aerostack_msgs::QuadrotorPidControllerMode::UNKNOWN;
+    }else{
+        last_received_control_mode = msg->command;    
     }
 }
-
 #endif 

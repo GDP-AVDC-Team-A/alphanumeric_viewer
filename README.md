@@ -1,7 +1,5 @@
 # Alphanumeric Viewer
 
-# Brief
-
 ![Alphanumeric Viewer](https://i.ibb.co/b6sTr8R/alphanumeric-viewer.png)
 
 # Subscribed topics
@@ -12,19 +10,18 @@ One value of the following set {Unknown, Init, Landed, Flying, Hovering, Test, T
 - **actuator_command/quadrotor_command** ([mav_msgs/RollPitchYawrateThrust](http://docs.ros.org/api/mav_msgs/html/msg/RollPitchYawrateThrust.html))           
 Actuator command for the quadrotor specifying the derivative of the robot altitude (thrust), yaw rate, roll and pitch.
 
-- **motion_reference/assumed_control_mode** ([aerostack_msgs/FlightMotionControlMode](https://bitbucket.org/visionaerialrobotics/aerostack_msgs/src/6928ccc6afeb3250bc3e4b285ccfc252d213cb3e/msg/FlightMotionControlMode.msg))  
+- **motion_reference/assumed_control_mode** ([aerostack_msgs/QuadrotorPidControllerMode](https://bitbucket.org/visionaerialrobotics/aerostack_msgs/src/master/msg/QuadrotorPidControllerMode.msg))  
 Current controller's control mode.
 
 - **motion_reference/pose** ([geometry_msgs/PoseStamped](http://docs.ros.org/api/geometry_msgs/html/msg/PoseStamped.html))  
-Pose reference for the controller. This is the reference used by the controller when the control mode is POSE.
+Pose reference for the controller.
 
 - **motion_reference/speed** ([geometry_msgs/TwistStamped](http://docs.ros.org/lunar/api/geometry_msgs/html/msg/TwistStamped.html))  
-Speed reference for the controller. This is the reference used by the controller when the control mode is SPEED.
+Speed reference for the controller.
 
 - **self_localization/pose** ([geometry_msgs/PoseStamped](http://docs.ros.org/api/geometry_msgs/html/msg/PoseStamped.html))      
 Current pose of the vehicle
 
-## Deprecated subscribed topics
 - **battery** ([droneMsgsROS/battery](https://bitbucket.org/joselusl/dronemsgsros/src/2b47c507de4b636562f313f07abf07991b2432c4/msg/battery.msg?at=master&fileviewer=file-view-default))   
 Percentage of charge of battery (0 means no battery, 100 means full battery)
 
