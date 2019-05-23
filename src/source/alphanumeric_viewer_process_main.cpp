@@ -43,8 +43,7 @@ int main(int argc, char **argv)
 
     //ROS 
     ros::init(argc, argv, MODULE_NAME_DRONE_CONSOLE_INTERFACE);
-    ros::NodeHandle n;
-
+    ros::NodeHandle n("~");
 
     //Configuration
     n.param<std::string>("drone_id_namespace", drone_id_namespace, "drone1");

@@ -2,7 +2,6 @@
 <launch>
 	
 	<arg name="drone_id_namespace"  default="drone1" />
-	<arg name="drone_id_int" 	default="1" />
 	<arg name="my_stack_directory" 	default="$(env AEROSTACK_STACK)" />
 
 	<arg name="battery_topic_name" 	default="battery" />
@@ -27,7 +26,7 @@
 
 	<group ns="$(arg drone_id_namespace)">
 		<node name="alphanumeric_viewer" pkg="alphanumeric_viewer" type="alphanumeric_viewer" output="screen">
-			<param name="droneId" value="$(arg drone_id_int)" type="int"/>
+			<param name="drone_id_namespace" value="$(arg drone_id_namespace)" type="string"/>
 			<param name="stackPath" value="$(arg my_stack_directory)" type="string"/>
 			<param name="battery_topic_name" value="$(arg battery_topic_name)" type="string"/>
 			<param name="altitude_topic_name" value="$(arg altitude_topic_name)" type="string"/>
