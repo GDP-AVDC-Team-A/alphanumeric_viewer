@@ -277,9 +277,9 @@ std::stringstream *getPositionStream(){
                     double r, p, yaw;
                     m.getRPY(r, p, yaw);
                     
-                    if (isnan(yaw)) yaw = 0.0;
-                    if (isnan(r)) r = 0.0;
-                    if (isnan(p)) p = 0.0;
+                    if (std::isnan(yaw)) yaw = 0.0;
+                    if (std::isnan(r)) r = 0.0;
+                    if (std::isnan(p)) p = 0.0;
 
                     if (yaw > -0.01){
                         interface_printout_stream << "yaw:     " << std::setw(5) << std::internal << fabs(yaw) << " rad  " <<  std::endl; 
@@ -392,7 +392,7 @@ std::stringstream *getPositionReferencesStream(){
                     tf2::Matrix3x3 m(tf2::Quaternion (current_position_reference.pose.orientation.x,current_position_reference.pose.orientation.y,current_position_reference.pose.orientation.z,current_position_reference.pose.orientation.w));
                     double r, p, yaw = 0;
                     m.getRPY(r, p, yaw);
-                    if (isnan(yaw)){
+                    if (std::isnan(yaw)){
                         yaw = 0.0;
                     }
 
