@@ -41,6 +41,7 @@ int main(int argc, char **argv)
     //OUTPUT FORMAT
     interface_printout_stream << std::fixed << std::setprecision(2) << std::setfill('0'); //<< std::showpos
 
+
     //ROS 
     ros::init(argc, argv, MODULE_NAME_DRONE_CONSOLE_INTERFACE);
     ros::NodeHandle n("~");
@@ -114,13 +115,20 @@ int main(int argc, char **argv)
     
     //ncurses initialization (output text)
     initscr();
+    start_color();
+    use_default_colors();  
     curs_set(0);
     noecho();
     nodelay(stdscr, TRUE);
-    erase(); refresh();
+    erase();
+    refresh();
+    init_pair(1, COLOR_GREEN, -1);
+    init_pair(2, COLOR_RED, -1);
+    init_pair(3, COLOR_YELLOW, -1);
 
-    printw("         ----ALPHANUMERIC VIEWER OF AERIAL ROBOTIC PARAMETERS----");
 
+    printStaticMenu();
+       
     //Rate
     ros::Rate loop_rate(8);
 
@@ -130,40 +138,75 @@ int main(int argc, char **argv)
         //Read messages
         ros::spinOnce();
 
-        //Left column
-        int lineCommands=1, columCommands=0;   
+        //Sensor measurements
+        move(3,20);
+        printBattery();
+        move(4,20);
+        printStream(altitude_msg.altitude);printw(" m   ");
+        move(5,20);
+        printStream(ground_speed_msg.vector.x);printw(" m/s   ");
+        move(6,20);
+        printStream(ground_speed_msg.vector.y);printw(" m/s   ");
 
-            //SENSOR MEASUREMENTS
-            pinterface_printout_stream = getOdometryStream();
-            printout_stream(pinterface_printout_stream, &lineCommands, &columCommands);
+        //Self localization
+        move(10,11);
+        printStream(current_pose.pose.position.x);printw(" m   ");
+        move(11,11);
+         printStream(current_pose.pose.position.y);printw(" m   ");
+        move(12,11);
+         printStream(current_pose.pose.position.z);printw(" m   ");
+        tf2::Matrix3x3 m(tf2::Quaternion (current_pose.pose.orientation.x,current_pose.pose.orientation.y,current_pose.pose.orientation.z,current_pose.pose.orientation.w));
+        double r, p, yaw;
+        m.getRPY(r, p, yaw);
+        if (std::isnan(yaw)) yaw = 0.0;
+        if (std::isnan(r)) r = 0.0;
+        if (std::isnan(p)) p = 0.0;
+        move(13,11);
+         printStream(yaw);printw(" rad   ");
+        move(14,11);
+         printStream(p);printw(" rad   ");
+        move(15,11);
+         printStream(r);printw(" rad   ");
+        move(16,12);
+         printQuadrotorState();
 
-            //SELF LOCALIZATION
-            pinterface_printout_stream = getPositionStream();
-            printout_stream(pinterface_printout_stream, &lineCommands, &columCommands);
-            pinterface_printout_stream = getQuadrotorState();
-            printout_stream(pinterface_printout_stream, &lineCommands, &columCommands);            
-        
-        //Right column
-        lineCommands=2, columCommands=2*DISPLAY_COLUMN_SIZE+8;
+        //Position references
+        move(10,34);
+        printStream(current_position_reference.pose.position.x);printw(" m   ");
+        move(11,34);
+        printStream(current_position_reference.pose.position.y);printw(" m   ");
+        move(12,34);
+        printStream(current_position_reference.pose.position.z);printw(" m   ");
+        tf2::Matrix3x3 m2(tf2::Quaternion (current_position_reference.pose.orientation.x,current_position_reference.pose.orientation.y,current_position_reference.pose.orientation.z,current_position_reference.pose.orientation.w));
+        r = 0; p = 0; yaw = 0;
+        m2.getRPY(r, p, yaw);
+        if (std::isnan(yaw)) yaw = 0.0; 
+        move(13,34);
+        printStream(yaw);printw(" rad");
 
-            //ACTUATOR COMMANDS
-            pinterface_printout_stream = getQuadrotorCommandsStream();
-            printout_stream(pinterface_printout_stream, &lineCommands, &columCommands); 
+        //Speed references
+        move(10,59);
+        printStream(current_speed_reference.twist.linear.x);printw(" m/s  ");
+        move(11,59);
+        printStream(current_speed_reference.twist.linear.y);printw(" m/s   ");
+        move(12,59);
+        printStream(current_speed_reference.twist.linear.z);printw(" m/s    ");
+        move(13,59);
+        printStream(current_speed_reference.twist.angular.z);printw(" rad   ");
 
-            //Control Mode
-            pinterface_printout_stream = getControllerState();
-            printout_stream(pinterface_printout_stream, &lineCommands, &columCommands);
+        //Actuator commands
+        move(3,66);
+        printStream(quadrotor_command_msg.thrust.z);printw(" m/s  ");
+        move(4,66);
+        printStream(quadrotor_command_msg.yaw_rate);printw(" rad/s  ");
+        move(5,66);
+        printStream(quadrotor_command_msg.pitch);printw(" rad  ");
+        move(6,66);
+        printStream(quadrotor_command_msg.roll);printw(" rad  ");
+        move(7,67);
+        printControlMode();  
 
-            //SPEED REFERENCES
-            pinterface_printout_stream = getSpeedReferencesStream();
-            printout_stream(pinterface_printout_stream, &lineCommands, &columCommands);
 
-           lineCommands=9, columCommands=1*DISPLAY_COLUMN_SIZE+4;
-            //MOTION REFERENCES
-            pinterface_printout_stream = getPositionReferencesStream();
-            printout_stream(pinterface_printout_stream, &lineCommands, &columCommands);
-
-            
         //Refresh
         refresh();
         loop_rate.sleep();
@@ -174,266 +217,175 @@ int main(int argc, char **argv)
     return 0;
 }
 
-//Print streams
-void printout_stream( std::stringstream *pinterface_printout_stream, int *lineCommands, int *columCommands) {
-    std::string line;
-    move((*lineCommands),(*columCommands));
-    while( std::getline( *pinterface_printout_stream, line, '\n') ) {
-        for (int i = line.size(); i < DISPLAY_COLUMN_SIZE; i++)
-            line += " ";
-        printw(line.c_str());
-        move(++(*lineCommands),(*columCommands));
+//Print battery charge
+void printBattery(){
+    if(battery_msg.batteryPercent == 100) {
+        move(3,23);
+        attron(COLOR_PAIR(1));printw("%.0f",battery_msg.batteryPercent);attroff(COLOR_PAIR(1));
     }
+    if(battery_msg.batteryPercent > 50 && battery_msg.batteryPercent < 100) {
+        move(3,24);
+        attron(COLOR_PAIR(1));printw("%.0f",battery_msg.batteryPercent);attroff(COLOR_PAIR(1));
+    }
+    if(battery_msg.batteryPercent <= 50 && battery_msg.batteryPercent > 20) {
+        move(3,24);
+        attron(COLOR_PAIR(3));printw("%.0f",battery_msg.batteryPercent);attroff(COLOR_PAIR(3));
+    }
+    if(battery_msg.batteryPercent <= 20) {
+        if (battery_msg.batteryPercent > 10) move(3,24);
+        else move(3,25);
+        attron(COLOR_PAIR(2));printw("%.0f",battery_msg.batteryPercent);attroff(COLOR_PAIR(2));     
+    }
+move(3,27);
+printw("%%");
 }
 
-//Sensor Measurements Stream
-std::stringstream *getOdometryStream(){
+//Print float using stringstream
+void printStream(float var) {
     interface_printout_stream.clear();
     interface_printout_stream.str(std::string());
-    interface_printout_stream << std::endl
-        << "SENSOR MEASUREMENTS" << std::endl
-        << "Battery charge:     " << std::fixed << std::setprecision(0) << battery_msg.batteryPercent <<  "   %%"   << std::endl << std::fixed << std::setprecision(2);
-                    if (altitude_msg.altitude > -0.01){
-                        interface_printout_stream << "Altitude (z):       " << std::setw(5) << std::internal << fabs(altitude_msg.altitude)       << " m  "  << std::endl;
-                    }else{
-                        interface_printout_stream << "Altitude (z):      " << std::setw(6) << std::internal << altitude_msg.altitude       << " m  "  << std::endl;
-                    }
+    if (var > -0.01){
+        interface_printout_stream << std::setw(5) << std::internal << fabs(var);
+        attron(COLOR_PAIR(1));printw(" %s",interface_printout_stream.str().c_str());attroff(COLOR_PAIR(1));
+    }else{
+        interface_printout_stream << std::setw(6) << std::internal << var;
+        attron(COLOR_PAIR(2));printw("%s",interface_printout_stream.str().c_str());attroff(COLOR_PAIR(2));
+    }
+} 
 
-                    if (ground_speed_msg.vector.x > -0.01){
-                        interface_printout_stream << "Ground speed (x):   " << std::setw(5) << std::internal << fabs(ground_speed_msg.vector.x)    << " m/sec  "  << std::endl;
-                    }else{
-                        interface_printout_stream << "Ground speed (x):  " << std::setw(6) << std::internal << ground_speed_msg.vector.x    << " m/sec  "  << std::endl;
-                    }
-
-                    if (ground_speed_msg.vector.y > -0.01){
-                        interface_printout_stream << "Ground speed (y):   " << std::setw(5) << std::internal << fabs(ground_speed_msg.vector.y)    << " m/sec  " << std::endl;
-                    }else{
-                        interface_printout_stream << "Ground speed (y):  " << std::setw(6) << std::internal << ground_speed_msg.vector.y    << " m/sec  " << std::endl;
-                    }   
-        interface_printout_stream <<  std::endl <<  std::endl;
-    return &interface_printout_stream;
-}
-
-//Actuator commands Stream
-std::stringstream *getQuadrotorCommandsStream(){
+//Print double using stringstream
+void printStream(double var) {
     interface_printout_stream.clear();
     interface_printout_stream.str(std::string());
-    interface_printout_stream
-        << "ACTUATOR COMMANDS" << std::endl;
+    if (var > -0.01){
+        interface_printout_stream << std::setw(5) << std::internal << fabs(var);
+        attron(COLOR_PAIR(1));printw(" %s",interface_printout_stream.str().c_str());attroff(COLOR_PAIR(1));
+    }else{
+        interface_printout_stream << std::setw(6) << std::internal << var;
+        attron(COLOR_PAIR(2));printw("%s",interface_printout_stream.str().c_str());attroff(COLOR_PAIR(2));
+    }
+} 
 
-                    if (quadrotor_command_msg.thrust.z > -0.01){
-                        interface_printout_stream << "Altitude rate:     " << std::setw(5) << std::internal << fabs(quadrotor_command_msg.thrust.z) <<  " m/sec  "<<std::endl;
-                    }else{
-                        interface_printout_stream << "Altitude rate:    " << std::setw(6) << std::internal << quadrotor_command_msg.thrust.z <<  " m/sec  "<<std::endl;
-                    }
-
-                    if (quadrotor_command_msg.yaw_rate > -0.01){
-                        interface_printout_stream << "Yaw rate:          " << std::setw(5) << std::internal << fabs(quadrotor_command_msg.yaw_rate )           <<  " rad/sec  " <<std::endl;
-                    }else{
-                        interface_printout_stream << "Yaw rate:         " << std::setw(6) << std::internal << quadrotor_command_msg.yaw_rate            <<  " rad/sec  " <<std::endl;
-                    }
-
-                    if (quadrotor_command_msg.pitch > -0.01){
-                        interface_printout_stream << "Pitch:             " << std::setw(5) << std::internal << fabs(quadrotor_command_msg.pitch)     <<  " rad  "  <<std::endl;
-                    }else{
-                        interface_printout_stream << "Pitch:            " << std::setw(6) << std::internal << quadrotor_command_msg.pitch     <<  " rad  "  <<std::endl;
-                    }
-
-
-                    if (quadrotor_command_msg.roll > -0.01){
-                        interface_printout_stream << "Roll:              " << std::setw(5) << std::internal << fabs(quadrotor_command_msg.roll)      <<  " rad  "  <<std::endl; 
-                    }else{
-                        interface_printout_stream << "Roll:             " << std::setw(6) << std::internal << quadrotor_command_msg.roll      <<  " rad  "  <<std::endl; 
-                    }
-    return &interface_printout_stream;
-}
-
-//Self Localization Stream
-std::stringstream *getPositionStream(){
-    interface_printout_stream.clear();
-    interface_printout_stream.str(std::string());
-    interface_printout_stream
-        << "SELF LOCALIZATION" << std::endl;
-
-                    if (current_pose.pose.position.x > -0.01){
-                        interface_printout_stream << "x:       " << std::setw(5) << std::internal << fabs(current_pose.pose.position.x) << " m  " <<std::endl;
-                    }else{
-                        interface_printout_stream << "x:      " << std::setw(6) << std::internal << current_pose.pose.position.x << " m  " <<std::endl;
-                    }
-
-                    if (current_pose.pose.position.y > -0.01){
-                        interface_printout_stream  << "y:       " << std::setw(5) << std::internal << fabs(current_pose.pose.position.y) << " m  " << std::endl;
-                    }else{
-                        interface_printout_stream  << "y:      " << std::setw(6) << std::internal << current_pose.pose.position.y << " m  " << std::endl;
-                    }
-
-                    if (current_pose.pose.position.z > -0.01){
-                        interface_printout_stream << "z:       " << std::setw(5) << std::internal << fabs(current_pose.pose.position.z) << " m  " <<  std::endl;
-                    }else{
-                        interface_printout_stream << "z:      " << std::setw(6) << std::internal << current_pose.pose.position.z << " m  " <<  std::endl;
-                    }
-
-                    tf2::Matrix3x3 m(tf2::Quaternion (current_pose.pose.orientation.x,current_pose.pose.orientation.y,current_pose.pose.orientation.z,current_pose.pose.orientation.w));
-                    double r, p, yaw;
-                    m.getRPY(r, p, yaw);
-                    
-                    if (std::isnan(yaw)) yaw = 0.0;
-                    if (std::isnan(r)) r = 0.0;
-                    if (std::isnan(p)) p = 0.0;
-
-                    if (yaw > -0.01){
-                        interface_printout_stream << "yaw:     " << std::setw(5) << std::internal << fabs(yaw) << " rad  " <<  std::endl; 
-                    }else{
-                        interface_printout_stream << "yaw:    " << std::setw(6) << std::internal << yaw << " rad  " <<  std::endl; 
-                    }
-
-                    if (p > -0.01){
-                        interface_printout_stream << "pitch:   " << std::setw(5) << std::internal << fabs(p) << " rad  " << std::endl;
-                    }else{
-                        interface_printout_stream << "pitch:  " << std::setw(6) << std::internal << p << " rad    " << std::endl;
-                    }
-
-
-                    if (r > -0.01){
-                        interface_printout_stream << "roll:    " << std::setw(5) << std::internal << fabs(r) << " rad  " << std::endl;
-                    }else{
-                        interface_printout_stream << "roll:   " << std::setw(6) << std::internal << r << " rad  " << std::endl;
-                    }    
-    return &interface_printout_stream;
-}
-
-//Control mode Stream
-std::stringstream *getControllerState(){
-    interface_printout_stream.clear();
-    interface_printout_stream.str(std::string());
-    interface_printout_stream
-        << "Control mode:      ";
+//Print control mode
+void printControlMode(){
     switch (last_received_control_mode) {
     case aerostack_msgs::QuadrotorPidControllerMode::SPEED:
-        interface_printout_stream << "SPEED        " << std::endl;
+        printw("SPEED        ");
         break;
     case aerostack_msgs::QuadrotorPidControllerMode::POSE:
-        interface_printout_stream << "POSITION     " << std::endl;
+        printw("POSITION     ");
         break;
     case aerostack_msgs::QuadrotorPidControllerMode::GROUND_SPEED:
-        interface_printout_stream << "GROUND SPEED " << std::endl;
+        printw("GROUND SPEED ");
         break;
     case aerostack_msgs::QuadrotorPidControllerMode::SPEED_3D:
-        interface_printout_stream << "SPEED 3D     " << std::endl;
+        printw("SPEED 3D     ");
         break;        
      case aerostack_msgs::QuadrotorPidControllerMode::UNKNOWN:
     default:
-        interface_printout_stream << "UNKNOWN      " << std::endl;
+        printw("UNKNOWN      ");
         break;
     }
-    interface_printout_stream << std::endl;
-    return &interface_printout_stream;
 }
 
-//Status Stream
-std::stringstream *getQuadrotorState(){
-    interface_printout_stream.clear();
-    interface_printout_stream.str(std::string());
-    interface_printout_stream
-        << "Status:  ";
+//Print status
+void printQuadrotorState(){
     switch (quadrotor_status_msg.status) {
         case droneMsgsROS::droneStatus::UNKNOWN:
-        interface_printout_stream << "UNKNOWN   " << std::endl;
+            printw("UNKNOWN   ");
             break;
         case droneMsgsROS::droneStatus::INITED:
-            interface_printout_stream << "INIT  " << std::endl;
+            printw("INIT      ");
             break;
         case droneMsgsROS::droneStatus::LANDED:
-            interface_printout_stream << "LANDED  " << std::endl;
+            printw("LANDED    ");
             break;
         case droneMsgsROS::droneStatus::FLYING:
-            interface_printout_stream << "FLYING   " << std::endl;
+            printw("FLYING    ");
             break;
         case droneMsgsROS::droneStatus::HOVERING:
-            interface_printout_stream << "HOVERING" << std::endl;
+            printw("HOVERING  ");
             break;
         case droneMsgsROS::droneStatus::TAKING_OFF:
-            interface_printout_stream << "TAKING OFF" << std::endl;
+            printw("TAKING OFF");
             break;
         case droneMsgsROS::droneStatus::LANDING:
-            interface_printout_stream << "LANDING   " << std::endl;
+            printw("LANDING   ");
             break;
         case droneMsgsROS::droneStatus::LOOPING:
-            interface_printout_stream << "LOOPING   " << std::endl;
+            printw("LOOPING   ");
             break;
     }
-    return &interface_printout_stream;
 }
 
-//Motion References Stream
-std::stringstream *getPositionReferencesStream(){
-    interface_printout_stream.clear();
-    interface_printout_stream.str(std::string());
-    interface_printout_stream
-        << "POSITION REFERENCES" << std::endl;
-                    if (current_position_reference.pose.position.x > -0.01){
-                        interface_printout_stream << "x:       " << std::setw(5) << std::internal << fabs(current_position_reference.pose.position.x) << " m  " <<std::endl;
-                    }else{
-                        interface_printout_stream << "x:      " << std::setw(6) << std::internal << current_position_reference.pose.position.x     << " m  " <<std::endl;
-                    }
+void printStaticMenu(){
+    move(0,0);
+    printw("             - ALPHANUMERIC VIEWER OF AERIAL ROBOTIC PARAMETERS -");
+    //Sensor measurements
+    move(2,0);
+    printw(" SENSOR MEASUREMENTS");
+    move(3,0);
+    printw(" Battery charge:");
+    move(4,0);
+    printw(" Altitude (z):");
+    move(5,0);
+    printw(" Ground speed (x):");
+    move(6,0);
+    printw(" Ground speed (y):");
 
-                    if (current_position_reference.pose.position.y > -0.01){
-                        interface_printout_stream  << "y:       " << std::setw(5) << std::internal << fabs(current_position_reference.pose.position.y) << " m  " <<std::endl;
-                    }else{
-                        interface_printout_stream  << "y:      " << std::setw(6) << std::internal << current_position_reference.pose.position.y     << " m  " <<std::endl;
-                    }
+    //Actuator commands
+    move(2,50);
+    printw("ACTUATOR COMMANDS");
+    move(3,50);
+    printw("Altitude rate:");
+    move(4,50);
+    printw("Yaw rate:");
+    move(5,50);
+    printw("Pitch:");
+    move(6,50);
+    printw("Roll:");
+    move(7,50);
+    printw("Control mode:");
 
-                    if (current_position_reference.pose.position.z > -0.01){
-                        interface_printout_stream << "z:       " << std::setw(5) << std::internal << fabs(current_position_reference.pose.position.z) << " m  " <<std::endl;
-                    }else{
-                        interface_printout_stream << "z:      " << std::setw(6) << std::internal << current_position_reference.pose.position.z     << " m  " <<std::endl;
-                    }
+    //Self localization
+    move(9,0);
+    printw(" SELF LOCALIZATION");
+    move(10,0);
+    printw(" x:");
+    move(11,0);
+    printw(" y:");
+    move(12,0);
+    printw(" z:");
+    move(13,0);
+    printw(" yaw:");
+    move(14,0);
+    printw(" pitch:");
+    move(15,0);
+    printw(" roll:");
+    move(16,0);
+    printw(" Status:");
 
-                    tf2::Matrix3x3 m(tf2::Quaternion (current_position_reference.pose.orientation.x,current_position_reference.pose.orientation.y,current_position_reference.pose.orientation.z,current_position_reference.pose.orientation.w));
-                    double r, p, yaw = 0;
-                    m.getRPY(r, p, yaw);
-                    if (std::isnan(yaw)){
-                        yaw = 0.0;
-                    }
+    //Position references
+    move(9,26);
+    printw("POSITION REFERENCES");
+    move(10,26);
+    printw("x:");
+    move(11,26);
+    printw("y:");
+    move(12,26);
+    printw("z:");
+    move(13,26);
+    printw("yaw:");
 
-                    if (yaw > -0.01){
-                        interface_printout_stream << "yaw:     " << std::setw(5) << std::internal << fabs(yaw) << " rad  " <<std::endl; 
-                    }else{
-                        interface_printout_stream << "yaw:    " << std::setw(6) << std::internal << yaw   << " rad  " <<std::endl; 
-                    }
-
-    return &interface_printout_stream;
+    //Speed references
+    move(9,50);
+    printw("SPEED REFERENCES");
+    move(10,50);
+    printw("dx:");
+    move(11,50);
+    printw("dy:");
+    move(12,50);
+    printw("dz:");
+    move(13,50);
+    printw("dyaw:");    
 }
-
-//Motion Speed References Stream
-std::stringstream *getSpeedReferencesStream(){
-    interface_printout_stream.clear();
-    interface_printout_stream.str(std::string());
-    interface_printout_stream
-        << "SPEED REFERENCES" << std::endl;
-                    if (current_speed_reference.twist.linear.x > -0.01){
-                        interface_printout_stream << "dx:       " << std::setw(5) << std::internal << fabs(current_speed_reference.twist.linear.x) << " m/sec  " <<std::endl;
-                    }else{
-                        interface_printout_stream << "dx:      " << std::setw(6) << std::internal << current_speed_reference.twist.linear.x     << " m/sec  " <<std::endl;
-                    }
-
-                    if (current_speed_reference.twist.linear.y > -0.01){
-                        interface_printout_stream  << "dy:       " << std::setw(5) << std::internal << fabs(current_speed_reference.twist.linear.y) << " m/sec  " <<std::endl;
-                    }else{
-                        interface_printout_stream  << "dy:      " << std::setw(6) << std::internal << current_speed_reference.twist.linear.y    << " m/sec  " <<std::endl;
-                    }
-
-                    if (current_speed_reference.twist.linear.z > -0.01){
-                        interface_printout_stream << "dz:       " << std::setw(5) << std::internal << current_speed_reference.twist.linear.z << " m/sec  " <<std::endl;
-                    }else{
-                        interface_printout_stream << "dz:      " << std::setw(6) << std::internal << current_speed_reference.twist.linear.z     << " m/sec  " <<std::endl;
-                    }
-
-                    if (current_speed_reference.twist.angular.z > -0.01){
-                        interface_printout_stream << "dyaw:     " << std::setw(5) << std::internal << fabs(current_speed_reference.twist.angular.z) << " rad  " <<std::endl; 
-                    }else{
-                        interface_printout_stream << "dyaw:    " << std::setw(6) << std::internal << current_speed_reference.twist.angular.z   << " rad  " <<std::endl; 
-                    }
-    return &interface_printout_stream;
-}
-

@@ -71,9 +71,6 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 
-//Column size
-#define DISPLAY_COLUMN_SIZE 19
-
 //MsgsROS
 droneMsgsROS::battery battery_msg;
 droneMsgsROS::droneAltitude altitude_msg;
@@ -98,7 +95,7 @@ ros::Subscriber speed_reference_subscriber;
     
 //Variables
 std::stringstream interface_printout_stream;
-std::stringstream *pinterface_printout_stream;
+std::stringstream pinterface_printout_stream;
 std::string drone_id_namespace;
 
 //Topics 
@@ -113,14 +110,12 @@ std::string motion_reference_speed_topic_name;
 std::string motion_reference_pose_topic_name;
 
 //Print-Stream Functions
-void printout_stream( std::stringstream *pinterface_printout_stream, int *lineCommands, int *columCommands);
-std::stringstream *getOdometryStream();
-std::stringstream *getQuadrotorCommandsStream();
-std::stringstream *getPositionReferencesStream();
-std::stringstream *getQuadrotorState();
-std::stringstream *getControllerState();
-std::stringstream *getPositionStream();
-std::stringstream *getSpeedReferencesStream();
+void printStream(float var);
+void printStream(double var);
+void printQuadrotorState();
+void printControlMode();
+void printBattery();
+void printStaticMenu();
 
 //Callback Functions
 void selfLocalizationPoseCallback(const geometry_msgs::PoseStamped &msg) { current_pose  = (msg); }
@@ -129,7 +124,6 @@ void altitudeCallback(const droneMsgsROS::droneAltitude::ConstPtr& msg){altitude
 void groundSpeedCallback(const droneMsgsROS::vector2Stamped::ConstPtr& msg){ground_speed_msg=*msg;}
 void droneStatusCallback(const droneMsgsROS::droneStatus::ConstPtr& msg){quadrotor_status_msg=*msg;}
 void quadrotorCommandCallback(const mav_msgs::RollPitchYawrateThrust::ConstPtr& msg){quadrotor_command_msg=*msg;}
-
 void positionRefsCallback(const geometry_msgs::PoseStamped::ConstPtr &msg) {current_position_reference = (*msg);}
 void speedRefsSubCallback(const geometry_msgs::TwistStamped::ConstPtr &msg) {current_speed_reference = (*msg);}
 void controlModeSubCallback(const aerostack_msgs::QuadrotorPidControllerMode::ConstPtr &msg) { 

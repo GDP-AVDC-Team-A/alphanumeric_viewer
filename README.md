@@ -1,7 +1,8 @@
 # Alphanumeric Viewer
 
-![Alphanumeric Viewer](https://i.ibb.co/b6sTr8R/alphanumeric-viewer.png)
-
+<p align="center">
+<img src="https://i.ibb.co/vLhJpbn/alphanumeric.png" title="Alphanumeric Viewer">
+</p>
 # Subscribed topics
 
 - **status** ([droneMsgsROS/droneStatus](https://bitbucket.org/joselusl/dronemsgsros/src/fa03af3fb09b943ea728d28683ff7b6032f74d66/msg/droneStatus.msg?at=master&fileviewer=file-view-default))   
