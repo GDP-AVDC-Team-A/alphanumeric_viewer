@@ -71,6 +71,7 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 
+#define FREQ_INTERFACE 8.0
 //MsgsROS
 droneMsgsROS::battery battery_msg;
 droneMsgsROS::droneAltitude altitude_msg;
@@ -127,7 +128,7 @@ void quadrotorCommandCallback(const mav_msgs::RollPitchYawrateThrust::ConstPtr& 
 void positionRefsCallback(const geometry_msgs::PoseStamped::ConstPtr &msg) {current_position_reference = (*msg);}
 void speedRefsSubCallback(const geometry_msgs::TwistStamped::ConstPtr &msg) {current_speed_reference = (*msg);}
 void controlModeSubCallback(const aerostack_msgs::QuadrotorPidControllerMode::ConstPtr &msg) { 
-    if(msg->command <1 || msg->command >4 ){
+    if(msg->command <1 || msg->command >5 ){
         last_received_control_mode = aerostack_msgs::QuadrotorPidControllerMode::UNKNOWN;
     }else{
         last_received_control_mode = msg->command;    

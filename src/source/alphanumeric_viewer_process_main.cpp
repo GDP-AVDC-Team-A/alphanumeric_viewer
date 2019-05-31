@@ -130,7 +130,7 @@ int main(int argc, char **argv)
     printStaticMenu();
        
     //Rate
-    ros::Rate loop_rate(8);
+    ros::Rate loop_rate(FREQ_INTERFACE);
 
     //Loop
     while (ros::ok()) {
@@ -280,7 +280,10 @@ void printControlMode(){
         break;
     case aerostack_msgs::QuadrotorPidControllerMode::SPEED_3D:
         printw("SPEED 3D     ");
-        break;        
+        break; 
+    case aerostack_msgs::QuadrotorPidControllerMode::ATTITUDE:
+        printw("ATTITUDE     ");
+        break;                   
      case aerostack_msgs::QuadrotorPidControllerMode::UNKNOWN:
     default:
         printw("UNKNOWN      ");
