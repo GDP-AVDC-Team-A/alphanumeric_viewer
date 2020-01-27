@@ -39,8 +39,7 @@
 int main(int argc, char **argv)
 {
     //OUTPUT FORMAT
-    interface_printout_stream << std::fixed << std::setprecision(2) << std::setfill('0'); //<< std::showpos
-
+    interface_printout_stream << std::fixed << std::setprecision(2) << std::setfill('0');
 
     //ROS 
     ros::init(argc, argv, MODULE_NAME_DRONE_CONSOLE_INTERFACE);
@@ -50,63 +49,36 @@ int main(int argc, char **argv)
     n.param<std::string>("drone_id_namespace", drone_id_namespace, "drone1");
 
     ros::param::get("~battery_topic_name", battery_topic_name);
-    if ( battery_topic_name.length() == 0)
-    {
-        battery_topic_name="battery";
-    }
-   ros::param::get("~altitude_topic_name", altitude_topic_name);
-    if ( altitude_topic_name.length() == 0)
-    {
-        altitude_topic_name="altitude";
-    }
-   ros::param::get("~ground_speed_topic_name", ground_speed_topic_name);
-    if ( ground_speed_topic_name.length() == 0)
-    {
-        ground_speed_topic_name="ground_speed";
-    }
-    ros::param::get("~quadrotor_command_topic_name", quadrotor_command_topic_name);
-    if ( quadrotor_command_topic_name.length() == 0)
-    {
-        quadrotor_command_topic_name="actuator_command/quadrotor_command";
-    }
-   ros::param::get("~assumed_control_mode_topic_name", assumed_control_mode_topic_name);
-    if ( assumed_control_mode_topic_name.length() == 0)
-    {
-        assumed_control_mode_topic_name="motion_reference/assumed_control_mode";
-    }
+    ros::param::get("~altitude_topic_name", altitude_topic_name);
+    ros::param::get("~altitude_sea_level_topic_name", altitude_sea_level_topic_name);
+    ros::param::get("~ground_speed_topic_name", ground_speed_topic_name);
+    ros::param::get("~imu_topic_name", imu_topic_name);
+    ros::param::get("~actuator_command_roll_pitch_topic_name", actuator_command_roll_pitch_topic_name);
+    ros::param::get("~actuator_command_altitude_yaw_topic_name", actuator_command_altitude_yaw_topic_name);
+    ros::param::get("~assumed_control_mode_topic_name", assumed_control_mode_topic_name);
     ros::param::get("~status_topic_name", status_topic_name);
-    if ( status_topic_name.length() == 0)
-    {
-        status_topic_name="status";
-    }
-
+    ros::param::get("~temperature_topic_name", temperature_topic_name);
+    ros::param::get("~self_localization_speed_topic_name",self_localization_speed_topic_name);
     ros::param::get("~self_localization_pose_topic_name", self_localization_pose_topic_name);
-    if ( self_localization_pose_topic_name.length() == 0)
-    {
-        self_localization_pose_topic_name="self_localization/pose";
-    }
     ros::param::get("~motion_reference_speed_topic_name", motion_reference_speed_topic_name);
-    if ( motion_reference_speed_topic_name.length() == 0)
-    {
-        motion_reference_speed_topic_name="motion_reference/speed";
-    }
     ros::param::get("~motion_reference_pose_topic_name", motion_reference_pose_topic_name);
-    if ( motion_reference_pose_topic_name.length() == 0)
-    {
-        motion_reference_pose_topic_name="motion_reference/pose";
-    }
 
     //Sensor measurements subscribers
     battery_sub=n.subscribe("/"+drone_id_namespace+"/"+battery_topic_name, 1, &batteryCallback);
     altitude_sub=n.subscribe("/"+drone_id_namespace+"/"+altitude_topic_name, 1, &altitudeCallback);
+    altitude_sea_level_sub=n.subscribe("/"+drone_id_namespace+"/"+altitude_sea_level_topic_name, 1, &altitudeSeaLevelCallback);
     ground_speed_sub=n.subscribe("/"+drone_id_namespace+"/"+ground_speed_topic_name, 1, &groundSpeedCallback);
+    imu_sub=n.subscribe("/"+drone_id_namespace+"/"+imu_topic_name, 1, &imuCallback);
+    temperature_sub = n.subscribe("/"+drone_id_namespace+"/"+temperature_topic_name, 1, &temperatureCallback);
 
     //Actuator commands subscribers
-    quadrotor_command_sub = n.subscribe("/"+drone_id_namespace+"/"+quadrotor_command_topic_name, 1, &quadrotorCommandCallback);
+    actuator_command_roll_pitch_sub = n.subscribe("/"+drone_id_namespace+"/"+actuator_command_roll_pitch_topic_name, 1, &actuatorCommandRollPitchCallback);
+    actuator_command_altitude_yaw_sub = n.subscribe("/"+drone_id_namespace+"/"+actuator_command_altitude_yaw_topic_name, 1, &actuatorCommandAltitudeYawCallback);
     control_mode_sub=n.subscribe(std::string("/"+drone_id_namespace + "/" +assumed_control_mode_topic_name), 1, &controlModeSubCallback);
 
     //Self localization subscriber
     self_localization_pose_sub= n.subscribe("/"+drone_id_namespace+"/"+self_localization_pose_topic_name, 1, &selfLocalizationPoseCallback);
+    self_localization_speed_sub= n.subscribe("/"+drone_id_namespace+"/"+self_localization_speed_topic_name, 1, &selfLocalizationSpeedCallback);
     status_sub=n.subscribe("/"+drone_id_namespace+"/"+status_topic_name, 1, &droneStatusCallback);
     
     //Motion references subscriber
@@ -125,87 +97,67 @@ int main(int argc, char **argv)
     init_pair(1, COLOR_GREEN, -1);
     init_pair(2, COLOR_RED, -1);
     init_pair(3, COLOR_YELLOW, -1);
+    init_pair(4, COLOR_CYAN, -1);
 
-
-    printStaticMenu();
+    printSensorMenu();
        
     //Rate
     ros::Rate loop_rate(FREQ_INTERFACE);
+    char command = 0;
+
+    // 0 Sensor
+    // 1 Navigation
+    int window = 0;
+
+    //Aux Sensors
+    battery_aux = false;
+    altitude_aux = false;
+    altitude_sea_level_aux = false;
+    ground_speed_aux = false;
+    imu_aux = false;
+    temperature_aux = false;
+
+    //Aux navigation
+    current_speed_reference_aux = false;
+    current_position_reference_aux = false;
+    actuator_command_altitude_yaw_aux = false;
+    actuator_command_roll_pitch_aux = false;  
+    current_pose_aux = false;
+    current_speed_aux = false;
 
     //Loop
     while (ros::ok()) {
-        
         //Read messages
         ros::spinOnce();
 
-        //Sensor measurements
-        move(3,20);
-        printBattery();
-        move(4,20);
-        printStream(altitude_msg.altitude);printw(" m   ");
-        move(5,20);
-        printStream(ground_speed_msg.vector.x);printw(" m/s   ");
-        move(6,20);
-        printStream(ground_speed_msg.vector.y);printw(" m/s   ");
+        //Get key
+        command = getch();
+        switch (command){
+            case 'S':
+            case 's':  // Sensor
+                erase();
+                refresh();
+                printSensorMenu();
+                window = 0;
+            break;
+            case 'N':
+            case 'n':  // Navigation
+                erase();
+                refresh();
+                printNavigationMenu();
+                window = 1;
+            break;
+        }
 
-        //Self localization
-        move(10,11);
-        printStream(current_pose.pose.position.x);printw(" m   ");
-        move(11,11);
-         printStream(current_pose.pose.position.y);printw(" m   ");
-        move(12,11);
-         printStream(current_pose.pose.position.z);printw(" m   ");
-        tf2::Matrix3x3 m(tf2::Quaternion (current_pose.pose.orientation.x,current_pose.pose.orientation.y,current_pose.pose.orientation.z,current_pose.pose.orientation.w));
-        double r, p, yaw;
-        m.getRPY(r, p, yaw);
-        if (std::isnan(yaw)) yaw = 0.0;
-        if (std::isnan(r)) r = 0.0;
-        if (std::isnan(p)) p = 0.0;
-        move(13,11);
-         printStream(yaw);printw(" rad   ");
-        move(14,11);
-         printStream(p);printw(" rad   ");
-        move(15,11);
-         printStream(r);printw(" rad   ");
-        move(16,12);
-         printQuadrotorState();
-
-        //Position references
-        move(10,34);
-        printStream(current_position_reference.pose.position.x);printw(" m   ");
-        move(11,34);
-        printStream(current_position_reference.pose.position.y);printw(" m   ");
-        move(12,34);
-        printStream(current_position_reference.pose.position.z);printw(" m   ");
-        tf2::Matrix3x3 m2(tf2::Quaternion (current_position_reference.pose.orientation.x,current_position_reference.pose.orientation.y,current_position_reference.pose.orientation.z,current_position_reference.pose.orientation.w));
-        r = 0; p = 0; yaw = 0;
-        m2.getRPY(r, p, yaw);
-        if (std::isnan(yaw)) yaw = 0.0; 
-        move(13,34);
-        printStream(yaw);printw(" rad");
-
-        //Speed references
-        move(10,59);
-        printStream(current_speed_reference.twist.linear.x);printw(" m/s  ");
-        move(11,59);
-        printStream(current_speed_reference.twist.linear.y);printw(" m/s   ");
-        move(12,59);
-        printStream(current_speed_reference.twist.linear.z);printw(" m/s    ");
-        move(13,59);
-        printStream(current_speed_reference.twist.angular.z);printw(" rad   ");
-
-        //Actuator commands
-        move(3,66);
-        printStream(quadrotor_command_msg.thrust.z);printw(" m/s  ");
-        move(4,66);
-        printStream(quadrotor_command_msg.yaw_rate);printw(" rad/s  ");
-        move(5,66);
-        printStream(quadrotor_command_msg.pitch);printw(" rad  ");
-        move(6,66);
-        printStream(quadrotor_command_msg.roll);printw(" rad  ");
-        move(7,67);
-        printControlMode();  
-
+        //Print values
+        switch (window){
+            case 0:
+                printSensorValues();
+            break;
+            case 1:
+                printNavigationValues();
+            break;
+        }
 
         //Refresh
         refresh();
@@ -219,50 +171,80 @@ int main(int argc, char **argv)
 
 //Print battery charge
 void printBattery(){
-    if(battery_msg.batteryPercent == 100) {
-        move(3,23);
-        attron(COLOR_PAIR(1));printw("%.0f",battery_msg.batteryPercent);attroff(COLOR_PAIR(1));
+    if(battery_aux){
+        interface_printout_stream << std::fixed << std::setprecision(0) << std::setfill(' ');
+        interface_printout_stream.clear();
+        interface_printout_stream.str(std::string());
+        clrtoeol(); refresh();
+        float percentage = battery_msg.percentage * 100;
+        interface_printout_stream << std::setw(2) << std::internal << percentage;
+        if(battery_msg.percentage == 1) {
+            attron(COLOR_PAIR(1));printw(" %s",interface_printout_stream.str().c_str());attroff(COLOR_PAIR(1));
+        }
+        if(battery_msg.percentage > 0.5 && battery_msg.percentage < 1) {
+            attron(COLOR_PAIR(1));printw(" %s",interface_printout_stream.str().c_str());attroff(COLOR_PAIR(1));
+        }
+        if(battery_msg.percentage <= 0.5 && battery_msg.percentage > 0.2) {
+            attron(COLOR_PAIR(3));printw(" %s",interface_printout_stream.str().c_str());attroff(COLOR_PAIR(3));
+        }
+        if(battery_msg.percentage <= 0.2) {
+            attron(COLOR_PAIR(2));printw(" %s",interface_printout_stream.str().c_str());attroff(COLOR_PAIR(2));  
+        }
+    }else{ //Battery has not been received
+        printw("---");        
     }
-    if(battery_msg.batteryPercent > 50 && battery_msg.batteryPercent < 100) {
-        move(3,24);
-        attron(COLOR_PAIR(1));printw("%.0f",battery_msg.batteryPercent);attroff(COLOR_PAIR(1));
-    }
-    if(battery_msg.batteryPercent <= 50 && battery_msg.batteryPercent > 20) {
-        move(3,24);
-        attron(COLOR_PAIR(3));printw("%.0f",battery_msg.batteryPercent);attroff(COLOR_PAIR(3));
-    }
-    if(battery_msg.batteryPercent <= 20) {
-        if (battery_msg.batteryPercent > 10) move(3,24);
-        else move(3,25);
-        attron(COLOR_PAIR(2));printw("%.0f",battery_msg.batteryPercent);attroff(COLOR_PAIR(2));     
-    }
-move(3,27);
-printw("%%");
+    printw(" %%");
+    interface_printout_stream << std::fixed << std::setprecision(2) << std::setfill('0');
 }
 
 //Print float using stringstream
-void printStream(float var) {
-    interface_printout_stream.clear();
-    interface_printout_stream.str(std::string());
-    if (var > -0.01){
-        interface_printout_stream << std::setw(5) << std::internal << fabs(var);
-        attron(COLOR_PAIR(1));printw(" %s",interface_printout_stream.str().c_str());attroff(COLOR_PAIR(1));
+void printStream(float var,bool aux) {
+    if(aux){
+        interface_printout_stream.clear();
+        interface_printout_stream.str(std::string());
+        if (var > -0.01){
+            interface_printout_stream << std::setw(5) << std::internal << fabs(var);
+            attron(COLOR_PAIR(1));printw(" %s",interface_printout_stream.str().c_str());attroff(COLOR_PAIR(1));
+        }else{
+            interface_printout_stream << std::setw(6) << std::internal << var;
+            attron(COLOR_PAIR(2));printw("%s",interface_printout_stream.str().c_str());attroff(COLOR_PAIR(2));
+        }
     }else{
-        interface_printout_stream << std::setw(6) << std::internal << var;
-        attron(COLOR_PAIR(2));printw("%s",interface_printout_stream.str().c_str());attroff(COLOR_PAIR(2));
+        printw("--.--");
+    }
+} 
+
+//Print float using stringstream with 3 units
+void printStream3(float var,bool aux) {
+    if(aux){
+        interface_printout_stream.clear();
+        interface_printout_stream.str(std::string());
+        if (var > -0.01){
+            interface_printout_stream << std::setw(6) << std::internal << fabs(var);
+            attron(COLOR_PAIR(1));printw(" %s",interface_printout_stream.str().c_str());attroff(COLOR_PAIR(1));
+        }else{
+            interface_printout_stream << std::setw(7) << std::internal << var;
+            attron(COLOR_PAIR(2));printw("%s",interface_printout_stream.str().c_str());attroff(COLOR_PAIR(2));
+        }
+    }else{
+        printw("---.--");
     }
 } 
 
 //Print double using stringstream
-void printStream(double var) {
-    interface_printout_stream.clear();
-    interface_printout_stream.str(std::string());
-    if (var > -0.01){
-        interface_printout_stream << std::setw(5) << std::internal << fabs(var);
-        attron(COLOR_PAIR(1));printw(" %s",interface_printout_stream.str().c_str());attroff(COLOR_PAIR(1));
+void printStream(double var,bool aux) {
+    if(aux){
+        interface_printout_stream.clear();
+        interface_printout_stream.str(std::string());
+        if (var > -0.01){
+            interface_printout_stream << std::setw(5) << std::internal << fabs(var);
+            attron(COLOR_PAIR(1));printw(" %s",interface_printout_stream.str().c_str());attroff(COLOR_PAIR(1));
+        }else{
+            interface_printout_stream << std::setw(6) << std::internal << var;
+            attron(COLOR_PAIR(2));printw("%s",interface_printout_stream.str().c_str());attroff(COLOR_PAIR(2));
+        }
     }else{
-        interface_printout_stream << std::setw(6) << std::internal << var;
-        attron(COLOR_PAIR(2));printw("%s",interface_printout_stream.str().c_str());attroff(COLOR_PAIR(2));
+        printw("--.--");
     }
 } 
 
@@ -320,75 +302,339 @@ void printQuadrotorState(){
             break;
     }
 }
+//Sensor window
+void printSensorValues(){
+    //DroneID
+    move(4,4);
+    attron(COLOR_PAIR(4));printw("%s",drone_id_namespace.c_str());attroff(COLOR_PAIR(4));
+    //Battery
+    move(6,4);
+    printBattery();
+    //Speed
+    move(8,4);
+    printStream(ground_speed_msg.twist.linear.x,ground_speed_aux);printw(",");
+    move(8,11);
+    printStream(ground_speed_msg.twist.linear.y,ground_speed_aux);printw(",");
+    move(8,18);
+    printStream(ground_speed_msg.twist.linear.z,ground_speed_aux);printw(" m/s   ");
 
-void printStaticMenu(){
+    //Pose IMU
+    tf2::Matrix3x3 imu_m(tf2::Quaternion (imu_msg.orientation.x,imu_msg.orientation.y,imu_msg.orientation.z,imu_msg.orientation.w));
+    r = 0; p = 0; yaw = 0;
+    imu_m.getRPY(r, p, yaw);
+    if (std::isnan(r)) r = 0.0; 
+    if (std::isnan(p)) p = 0.0; 
+    if (std::isnan(yaw)) yaw = 0.0; 
+
+    move(10,4);
+    printStream(yaw,imu_aux);printw(",");
+    move(10,11);
+    printStream(p,imu_aux);printw(",");
+    move(10,18);
+    printStream(r,imu_aux);printw(" rad   ");
+
+    //Speed IMU
+    move(12,4);
+    printStream(imu_msg.angular_velocity.z,imu_aux);printw(",");
+    move(12,11);
+    printStream(imu_msg.angular_velocity.y,imu_aux);printw(",");
+    move(12,18);
+    printStream(imu_msg.angular_velocity.x,imu_aux);printw(" rad/s  ");
+
+    //Acceleration IMU
+    move(14,4);
+    printStream(imu_msg.linear_acceleration.x,imu_aux);printw(",");
+    move(14,11);
+    printStream(imu_msg.linear_acceleration.y,imu_aux);printw(",");
+    move(14,18);
+    printStream(imu_msg.linear_acceleration.z,imu_aux);printw(" m2/s   ");
+
+    //Altitude
+    move(4,52);
+    printStream(altitude_msg.point.z,altitude_aux);printw(" m");
+    //Altitude sea level
+    move(6,52);
+    printStream(altitude_sea_level_msg.point.z,altitude_sea_level_aux);printw(" m");
+    //Temperature
+    move(8,52);
+    printStream(temperature_msg.temperature,temperature_aux);printw(" Degrees celsius");
+}
+void printSensorMenu(){
     move(0,0);
-    printw("             - ALPHANUMERIC VIEWER OF AERIAL ROBOTIC PARAMETERS -");
-    //Sensor measurements
+    printw("                - ALPHANUMERIC VIEWER OF AERIAL ROBOTICS DATA -");
+    move(1,0);
+    printw("                        Key: S (sensors), N (navigation)");
     move(2,0);
-    printw(" SENSOR MEASUREMENTS");
+    printw("                             ^                          ");
+    //Left column  
     move(3,0);
-    printw(" Battery charge:");
-    move(4,0);
-    printw(" Altitude (z):");
+    printw(" Drone id:");
     move(5,0);
-    printw(" Ground speed (x):");
-    move(6,0);
-    printw(" Ground speed (y):");
+    printw(" Battery charge:");
+    move(7,0);
+    printw(" Speed (x,y,z):");
+    move(9,0);
+    printw(" Pose IMU (yaw,pitch,roll):");
+    move(11,0);
+    printw(" Speed IMU (yaw,pitch,roll):");
+    move(13,0);
+    printw(" Acceleration IMU (x,y,z):");
+
+    //Right column
+    move(3,50);
+    printw("Altitude (-z):");
+    move(5,50);
+    printw("Altitude (sea level):");
+    move(7,50);
+    printw("Temperature:");
+}
+
+void printNavigationValues(){
+    //Measurements
+    move(5,14);
+    printStream(altitude_msg.point.z,altitude_aux);printw(" m");
+    //Speed
+    move(6,14);
+    printStream(ground_speed_msg.twist.linear.x,ground_speed_aux);printw(",");
+    move(6,21);
+    printStream(ground_speed_msg.twist.linear.y,ground_speed_aux);printw(",");
+    move(6,28);
+    printStream(ground_speed_msg.twist.linear.z,ground_speed_aux);printw(" m/s   ");
+
+    //Pose IMU
+    tf2::Matrix3x3 imu_m(tf2::Quaternion (imu_msg.orientation.x,imu_msg.orientation.y,imu_msg.orientation.z,imu_msg.orientation.w));
+    r = 0; p = 0; yaw = 0;
+    imu_m.getRPY(r, p, yaw);
+    if (std::isnan(r)) r = 0.0; 
+    if (std::isnan(p)) p = 0.0; 
+    if (std::isnan(yaw)) yaw = 0.0; 
+
+    move(7,14);
+    printStream(yaw,imu_aux);printw(",");
+    move(7,21);
+    printStream(p,imu_aux);printw(",");
+    move(7,28);
+    printStream(r,imu_aux);printw(" rad   ");
+
+    //Speed IMU
+    move(8,14);
+    printStream(imu_msg.angular_velocity.z,imu_aux);printw(",");
+    move(8,21);
+    printStream(imu_msg.angular_velocity.y,imu_aux);printw(",");
+    move(8,28);
+    printStream(imu_msg.angular_velocity.x,imu_aux);printw(" rad/s  ");
+
+    //Acceleration IMU
+    move(9,14);
+    printStream(imu_msg.linear_acceleration.x,imu_aux);printw(",");
+    move(9,21);
+    printStream(imu_msg.linear_acceleration.y,imu_aux);printw(",");
+    move(9,28);
+    printStream(imu_msg.linear_acceleration.z,imu_aux);printw(" m2/s   ");
+
+    //Localization
+    //Pose
+    move(5,53);
+    printStream3(current_pose.pose.position.x,current_pose_aux);printw(",");
+    move(5,61);
+    printStream3(current_pose.pose.position.y,current_pose_aux);printw(",");
+    move(5,69);
+    printStream3(current_pose.pose.position.z,current_pose_aux);printw(" m "); 
+    //Speed
+    move(6,54);
+    printStream(current_speed.twist.linear.x,current_speed_aux);printw(",");
+    move(6,61);
+    printStream(current_speed.twist.linear.y,current_speed_aux);printw(",");
+    move(6,68);
+    printStream(current_speed.twist.linear.z,current_speed_aux);printw(" m/s "); 
+    //Pose(ypr)
+    tf2::Matrix3x3 pose_m(tf2::Quaternion (current_pose.pose.orientation.x,current_pose.pose.orientation.y,current_pose.pose.orientation.z,current_pose.pose.orientation.w));
+    pose_m.getRPY(r, p, yaw);
+    if (std::isnan(yaw)) yaw = 0.0; if (std::isnan(r)) r = 0.0; if (std::isnan(p)) p = 0.0;
+    move(7,54);
+    printStream(yaw,current_pose_aux);printw(",");
+    move(7,61);
+    printStream(p,current_pose_aux);printw(",");
+    move(7,68);
+    printStream(r,current_pose_aux);printw(" rad ");     
+    //Speed(ypr)
+    move(8,54);
+    printStream(current_speed.twist.angular.z,current_speed_aux);printw(",");
+    move(8,61);
+    printStream(current_speed.twist.angular.y,current_speed_aux);printw(",");
+    move(8,68);
+    printStream(current_speed.twist.angular.x,current_speed_aux);printw(" rad/s ");
+    //State
+    move(9,54);
+    printQuadrotorState();
 
     //Actuator commands
-    move(2,50);
-    printw("ACTUATOR COMMANDS");
-    move(3,50);
-    printw("Altitude rate:");
-    move(4,50);
-    printw("Yaw rate:");
-    move(5,50);
-    printw("Pitch:");
-    move(6,50);
-    printw("Roll:");
-    move(7,50);
+    //Pitch roll
+    tf2::Matrix3x3 actuator_m(tf2::Quaternion (actuator_command_roll_pitch_msg.pose.orientation.x,actuator_command_roll_pitch_msg.pose.orientation.y,actuator_command_roll_pitch_msg.pose.orientation.z,actuator_command_roll_pitch_msg.pose.orientation.w));
+    r = 0; p = 0; yaw = 0;
+    actuator_m.getRPY(r, p, yaw);
+    if (std::isnan(r)) r = 0.0; 
+    if (std::isnan(p)) p = 0.0; 
+    move(12,19);
+    printStream(p,actuator_command_roll_pitch_aux);printw(",");
+    move(12,26);
+    printStream(r,actuator_command_roll_pitch_aux);printw(" rad  ");
+    //Speed(z)
+    move(13,19);
+    printStream(actuator_command_altitude_yaw_msg.twist.linear.z,actuator_command_altitude_yaw_aux);printw(" m/s  ");
+    //Speed(yaw)
+    move(14,19);
+    printStream(actuator_command_altitude_yaw_msg.twist.angular.z,actuator_command_altitude_yaw_aux);printw(" rad/s  ");
+
+
+
+    //References
+    //Pose
+    move(12,53);
+    printStream3(current_position_reference.pose.position.x,current_position_reference_aux);printw(",");
+    move(12,61);
+    printStream3(current_position_reference.pose.position.y,current_position_reference_aux);printw(",");
+    move(12,69);
+    printStream3(current_position_reference.pose.position.z,current_position_reference_aux);printw(" m "); 
+    //Speed
+    move(13,54);
+    printStream(current_speed_reference.twist.linear.x,current_speed_reference_aux);printw(",");
+    move(13,61);
+    printStream(current_speed_reference.twist.linear.y,current_speed_reference_aux);printw(",");
+    move(13,68);
+    printStream(current_speed_reference.twist.linear.z,current_speed_reference_aux);printw(" m/s ");
+    //Pose (yaw)
+    tf2::Matrix3x3 pose_ref_m(tf2::Quaternion (current_position_reference.pose.orientation.x,current_position_reference.pose.orientation.y,current_position_reference.pose.orientation.z,current_position_reference.pose.orientation.w));
+    r = 0; p = 0; yaw = 0;
+    pose_ref_m.getRPY(r, p, yaw);
+    if (std::isnan(yaw)) yaw = 0.0; 
+    move(14,54);
+    printStream(yaw,current_position_reference_aux);printw(" rad");
+    //Speed (yaw)
+    move(15,54);
+    printStream(current_speed_reference.twist.angular.z,current_speed_reference_aux);printw(" rad/s  ");  
+    //Control mode
+    move(16,56);
+    printControlMode();  
+}
+
+void printNavigationMenu(){
+    move(0,0);
+    printw("                - ALPHANUMERIC VIEWER OF AERIAL ROBOTICS DATA -");
+    move(1,0);
+    printw("                        Key: S (sensors), N (navigation)");
+    move(2,0);
+    printw("                                          ^             ");
+    //Measurements
+    move(4,0);
+    printw(" MEASUREMENTS");
+    move(5,0);
+    printw(" Pose(z):");
+    move(6,0);
+    printw(" Speed(xyz):");
+    move(7,0);
+    printw(" Pose(ypr):");
+    move(8,0);
+    printw(" Speed(ypr):");
+    move(9,0);
+    printw(" Accel.(xyz):");
+
+    //Localization
+    move(4,42);
+    printw("LOCALIZATION");
+    move(5,42);
+    printw("Pose(xyz):");
+    move(6,42);
+    printw("Speed(xyz):");
+    move(7,42);
+    printw("Pose(ypr):");
+    move(8,42);
+    printw("Speed(ypr):");
+    move(9,42);
+    printw("Status:");
+
+    //References
+    move(11,42);
+    printw("REFERENCES");
+    move(12,42);
+    printw("Pose(xyz):");
+    move(13,42);
+    printw("Speed(xyz):");
+    move(14,42);
+    printw("Pose(yaw):");
+    move(15,42);
+    printw("Speed(yaw):");
+    move(16,42);
     printw("Control mode:");
 
-    //Self localization
-    move(9,0);
-    printw(" SELF LOCALIZATION");
-    move(10,0);
-    printw(" x:");
+    //Actuator commands
     move(11,0);
-    printw(" y:");
+    printw(" ACTUATOR COMMANDS");
     move(12,0);
-    printw(" z:");
+    printw(" Pose(pitch,roll):");
     move(13,0);
-    printw(" yaw:");
+    printw(" Speed(z):");
     move(14,0);
-    printw(" pitch:");
-    move(15,0);
-    printw(" roll:");
-    move(16,0);
-    printw(" Status:");
-
-    //Position references
-    move(9,26);
-    printw("POSITION REFERENCES");
-    move(10,26);
-    printw("x:");
-    move(11,26);
-    printw("y:");
-    move(12,26);
-    printw("z:");
-    move(13,26);
-    printw("yaw:");
-
-    //Speed references
-    move(9,50);
-    printw("SPEED REFERENCES");
-    move(10,50);
-    printw("dx:");
-    move(11,50);
-    printw("dy:");
-    move(12,50);
-    printw("dz:");
-    move(13,50);
-    printw("dyaw:");    
+    printw(" Speed(yaw):");
 }
+
+void selfLocalizationSpeedCallback(const geometry_msgs::TwistStamped::ConstPtr& msg){
+    current_speed  = (*msg); 
+    current_speed_aux = true;
+}
+//Callbacks
+void selfLocalizationPoseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg) {
+    current_pose  = (*msg);
+    current_pose_aux = true;
+}
+void batteryCallback(const sensor_msgs::BatteryState::ConstPtr& msg){ 
+    battery_msg=*msg;
+    battery_aux = true;
+}
+void altitudeCallback(const geometry_msgs::PointStamped::ConstPtr& msg){
+    altitude_msg=*msg;
+    altitude_aux = true;
+}
+void altitudeSeaLevelCallback(const geometry_msgs::PointStamped::ConstPtr& msg){
+    altitude_sea_level_msg=*msg;
+    altitude_sea_level_aux = true;
+}
+void groundSpeedCallback(const geometry_msgs::TwistStamped::ConstPtr& msg){
+    ground_speed_msg=*msg;
+    ground_speed_aux = true;
+}
+void imuCallback(const sensor_msgs::Imu::ConstPtr &msg){
+    imu_msg=*msg;
+    imu_aux = true;
+}
+void droneStatusCallback(const droneMsgsROS::droneStatus::ConstPtr& msg){
+    quadrotor_status_msg=*msg;
+}
+void actuatorCommandRollPitchCallback(const geometry_msgs::PoseStamped::ConstPtr& msg){
+    actuator_command_roll_pitch_msg=*msg;
+    actuator_command_roll_pitch_aux = true;
+}
+void actuatorCommandAltitudeYawCallback(const geometry_msgs::TwistStamped::ConstPtr& msg){
+    actuator_command_altitude_yaw_msg=*msg;
+    actuator_command_altitude_yaw_aux = true;
+}
+void positionRefsCallback(const geometry_msgs::PoseStamped::ConstPtr &msg) {
+    current_position_reference = (*msg);
+    current_position_reference_aux = true;
+}
+void speedRefsSubCallback(const geometry_msgs::TwistStamped::ConstPtr &msg) {
+    current_speed_reference = (*msg);
+    current_speed_reference_aux = true;
+}
+void controlModeSubCallback(const aerostack_msgs::QuadrotorPidControllerMode::ConstPtr &msg) { 
+    if(msg->command <1 || msg->command >5 ){
+        last_received_control_mode = aerostack_msgs::QuadrotorPidControllerMode::UNKNOWN;
+    }else{
+        last_received_control_mode = msg->command;    
+    }
+}
+void temperatureCallback(const sensor_msgs::Temperature::ConstPtr &msg){
+    temperature_msg=*msg;
+    temperature_aux = true;
+}
+

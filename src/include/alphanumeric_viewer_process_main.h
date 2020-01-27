@@ -48,24 +48,17 @@
 //ROS
 #include "ros/ros.h"
 #include "geometry_msgs/Vector3Stamped.h"
+#include "geometry_msgs/Vector3.h"
 #include "geometry_msgs/PoseStamped.h"
+#include "geometry_msgs/PointStamped.h"
 #include "geometry_msgs/TwistStamped.h"
-#include "droneMsgsROS/battery.h"
-#include "droneMsgsROS/droneAltitude.h"
-#include "droneMsgsROS/vector2Stamped.h"
+#include "geometry_msgs/Quaternion.h"
+#include "sensor_msgs/Temperature.h"
+#include "sensor_msgs/BatteryState.h"
+#include "sensor_msgs/Imu.h"
 #include "droneMsgsROS/droneStatus.h"
-#include "droneMsgsROS/dronePitchRollCmd.h"
-#include "droneMsgsROS/droneDYawCmd.h"
-#include "droneMsgsROS/droneDAltitudeCmd.h"
-#include "droneMsgsROS/droneCommand.h"
 #include "aerostack_msgs/SetControlMode.h"
 #include "aerostack_msgs/QuadrotorPidControllerMode.h"
-#include "droneMsgsROS/dronePose.h"
-#include "droneMsgsROS/droneSpeeds.h"
-#include "droneMsgsROS/dronePositionTrajectoryRefCommand.h"
-#include "droneMsgsROS/dronePositionRefCommandStamped.h"
-#include "droneMsgsROS/droneYawRefCommand.h"
-#include "droneMsgsROS/droneAltitudeCmd.h"
 #include "communication_definition.h"
 #include "mav_msgs/RollPitchYawrateThrust.h" 
 #include <tf2/LinearMath/Quaternion.h>
@@ -73,23 +66,34 @@
 
 #define FREQ_INTERFACE 8.0
 //MsgsROS
-droneMsgsROS::battery battery_msg;
-droneMsgsROS::droneAltitude altitude_msg;
-droneMsgsROS::vector2Stamped ground_speed_msg;
+sensor_msgs::BatteryState battery_msg;
+geometry_msgs::PointStamped altitude_msg;
+geometry_msgs::PointStamped altitude_sea_level_msg;
+geometry_msgs::TwistStamped ground_speed_msg;
+geometry_msgs::TwistStamped current_speed;
+sensor_msgs::Imu imu_msg;
+sensor_msgs::Temperature temperature_msg;
 droneMsgsROS::droneStatus quadrotor_status_msg;
 geometry_msgs::PoseStamped current_pose;;
 geometry_msgs::PoseStamped current_position_reference;
 geometry_msgs::TwistStamped current_speed_reference;
-mav_msgs::RollPitchYawrateThrust quadrotor_command_msg;
+geometry_msgs::PoseStamped actuator_command_roll_pitch_msg;
+geometry_msgs::TwistStamped actuator_command_altitude_yaw_msg;
 int last_received_control_mode;
+double r, p, yaw;
 
 //Subscribers
 ros::Subscriber self_localization_pose_sub;
+ros::Subscriber self_localization_speed_sub;
 ros::Subscriber battery_sub;
+ros::Subscriber imu_sub;
 ros::Subscriber altitude_sub;
+ros::Subscriber altitude_sea_level_sub;
 ros::Subscriber ground_speed_sub;
+ros::Subscriber temperature_sub;
 ros::Subscriber status_sub;
-ros::Subscriber quadrotor_command_sub;
+ros::Subscriber actuator_command_roll_pitch_sub;
+ros::Subscriber actuator_command_altitude_yaw_sub;
 ros::Subscriber control_mode_sub;
 ros::Subscriber position_reference_subscriber;
 ros::Subscriber speed_reference_subscriber;
@@ -99,11 +103,30 @@ std::stringstream interface_printout_stream;
 std::stringstream pinterface_printout_stream;
 std::string drone_id_namespace;
 
+//Aux (check if a variable has been received)
+bool battery_aux;
+bool altitude_aux;
+bool altitude_sea_level_aux;
+bool ground_speed_aux;
+bool imu_aux;
+bool temperature_aux;
+bool current_speed_reference_aux;
+bool current_position_reference_aux;
+bool actuator_command_altitude_yaw_aux;
+bool actuator_command_roll_pitch_aux;  
+bool current_pose_aux;
+bool current_speed_aux;
+
 //Topics 
 std::string battery_topic_name;
 std::string altitude_topic_name;
+std::string altitude_sea_level_topic_name;
+std::string self_localization_speed_topic_name;
 std::string ground_speed_topic_name;
-std::string quadrotor_command_topic_name;
+std::string temperature_topic_name;
+std::string imu_topic_name;
+std::string actuator_command_roll_pitch_topic_name;
+std::string actuator_command_altitude_yaw_topic_name;
 std::string assumed_control_mode_topic_name;
 std::string status_topic_name;
 std::string self_localization_pose_topic_name;
@@ -111,27 +134,33 @@ std::string motion_reference_speed_topic_name;
 std::string motion_reference_pose_topic_name;
 
 //Print-Stream Functions
-void printStream(float var);
-void printStream(double var);
+void printStream(float var, bool aux);
+void printStream(double var, bool aux);
+void printStream3(float var,bool aux);
 void printQuadrotorState();
 void printControlMode();
 void printBattery();
-void printStaticMenu();
+void printSensorMenu();
+void printNavigationMenu();
+void printSensorValues();
+void printNavigationValues();
 
 //Callback Functions
-void selfLocalizationPoseCallback(const geometry_msgs::PoseStamped &msg) { current_pose  = (msg); }
-void batteryCallback(const droneMsgsROS::battery::ConstPtr& msg){ battery_msg=*msg;}
-void altitudeCallback(const droneMsgsROS::droneAltitude::ConstPtr& msg){altitude_msg=*msg;}
-void groundSpeedCallback(const droneMsgsROS::vector2Stamped::ConstPtr& msg){ground_speed_msg=*msg;}
-void droneStatusCallback(const droneMsgsROS::droneStatus::ConstPtr& msg){quadrotor_status_msg=*msg;}
-void quadrotorCommandCallback(const mav_msgs::RollPitchYawrateThrust::ConstPtr& msg){quadrotor_command_msg=*msg;}
-void positionRefsCallback(const geometry_msgs::PoseStamped::ConstPtr &msg) {current_position_reference = (*msg);}
-void speedRefsSubCallback(const geometry_msgs::TwistStamped::ConstPtr &msg) {current_speed_reference = (*msg);}
-void controlModeSubCallback(const aerostack_msgs::QuadrotorPidControllerMode::ConstPtr &msg) { 
-    if(msg->command <1 || msg->command >5 ){
-        last_received_control_mode = aerostack_msgs::QuadrotorPidControllerMode::UNKNOWN;
-    }else{
-        last_received_control_mode = msg->command;    
-    }
-}
+void selfLocalizationPoseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
+void selfLocalizationSpeedCallback(const geometry_msgs::TwistStamped::ConstPtr &msg);
+void batteryCallback(const sensor_msgs::BatteryState::ConstPtr& msg);
+void altitudeCallback(const geometry_msgs::PointStamped::ConstPtr& msg);
+void altitudeSeaLevelCallback(const geometry_msgs::PointStamped::ConstPtr& msg);
+void groundSpeedCallback(const geometry_msgs::TwistStamped::ConstPtr& msg);
+void droneStatusCallback(const droneMsgsROS::droneStatus::ConstPtr& msg);
+void actuatorCommandRollPitchCallback(const geometry_msgs::PoseStamped::ConstPtr& msg);
+void actuatorCommandAltitudeYawCallback(const geometry_msgs::TwistStamped::ConstPtr& msg);
+void positionRefsCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
+void speedRefsSubCallback(const geometry_msgs::TwistStamped::ConstPtr &msg);
+void controlModeSubCallback(const aerostack_msgs::QuadrotorPidControllerMode::ConstPtr &msg);
+void imuCallback(const sensor_msgs::Imu::ConstPtr &msg);
+void temperatureCallback(const sensor_msgs::Temperature::ConstPtr &msg);
+
 #endif 
+
+
