@@ -347,7 +347,7 @@ void printSensorValues(){
     move(14,11);
     printStream(imu_msg.linear_acceleration.y,imu_aux);printw(",");
     move(14,18);
-    printStream(imu_msg.linear_acceleration.z,imu_aux);printw(" m2/s   ");
+    printStream(imu_msg.linear_acceleration.z,imu_aux);printw(" m/s2   ");
 
     //Altitude
     move(4,52);
@@ -430,7 +430,7 @@ void printNavigationValues(){
     move(9,21);
     printStream(imu_msg.linear_acceleration.y,imu_aux);printw(",");
     move(9,28);
-    printStream(imu_msg.linear_acceleration.z,imu_aux);printw(" m2/s   ");
+    printStream(imu_msg.linear_acceleration.z,imu_aux);printw(" m/s2   ");
 
     //Localization
     //Pose
