@@ -56,10 +56,9 @@
 #include "sensor_msgs/Temperature.h"
 #include "sensor_msgs/BatteryState.h"
 #include "sensor_msgs/Imu.h"
-#include "droneMsgsROS/droneStatus.h"
+#include "aerostack_msgs/FlightState.h"
 #include "aerostack_msgs/SetControlMode.h"
 #include "aerostack_msgs/QuadrotorPidControllerMode.h"
-#include "communication_definition.h"
 #include "mav_msgs/RollPitchYawrateThrust.h" 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -73,7 +72,7 @@ geometry_msgs::TwistStamped ground_speed_msg;
 geometry_msgs::TwistStamped current_speed;
 sensor_msgs::Imu imu_msg;
 sensor_msgs::Temperature temperature_msg;
-droneMsgsROS::droneStatus quadrotor_status_msg;
+aerostack_msgs::FlightState quadrotor_status_msg;
 geometry_msgs::PoseStamped current_pose;;
 geometry_msgs::PoseStamped current_position_reference;
 geometry_msgs::TwistStamped current_speed_reference;
@@ -152,7 +151,7 @@ void batteryCallback(const sensor_msgs::BatteryState::ConstPtr& msg);
 void altitudeCallback(const geometry_msgs::PointStamped::ConstPtr& msg);
 void altitudeSeaLevelCallback(const geometry_msgs::PointStamped::ConstPtr& msg);
 void groundSpeedCallback(const geometry_msgs::TwistStamped::ConstPtr& msg);
-void droneStatusCallback(const droneMsgsROS::droneStatus::ConstPtr& msg);
+void droneStatusCallback(const aerostack_msgs::FlightState::ConstPtr& msg);
 void actuatorCommandRollPitchCallback(const geometry_msgs::PoseStamped::ConstPtr& msg);
 void actuatorCommandAltitudeYawCallback(const geometry_msgs::TwistStamped::ConstPtr& msg);
 void positionRefsCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);

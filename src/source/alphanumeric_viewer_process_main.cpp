@@ -42,7 +42,7 @@ int main(int argc, char **argv)
     interface_printout_stream << std::fixed << std::setprecision(2) << std::setfill('0');
 
     //ROS 
-    ros::init(argc, argv, MODULE_NAME_DRONE_CONSOLE_INTERFACE);
+    ros::init(argc, argv, "alphanumeric_viewer_process");
     ros::NodeHandle n("~");
 
     //Configuration
@@ -275,30 +275,24 @@ void printControlMode(){
 
 //Print status
 void printQuadrotorState(){
-    switch (quadrotor_status_msg.status) {
-        case droneMsgsROS::droneStatus::UNKNOWN:
+    switch (quadrotor_status_msg.state) {
+        case aerostack_msgs::FlightState::UNKNOWN:
             printw("UNKNOWN   ");
             break;
-        case droneMsgsROS::droneStatus::INITED:
-            printw("INIT      ");
-            break;
-        case droneMsgsROS::droneStatus::LANDED:
+        case aerostack_msgs::FlightState::LANDED:
             printw("LANDED    ");
             break;
-        case droneMsgsROS::droneStatus::FLYING:
+        case aerostack_msgs::FlightState::FLYING:
             printw("FLYING    ");
             break;
-        case droneMsgsROS::droneStatus::HOVERING:
+        case aerostack_msgs::FlightState::HOVERING:
             printw("HOVERING  ");
             break;
-        case droneMsgsROS::droneStatus::TAKING_OFF:
+        case aerostack_msgs::FlightState::TAKING_OFF:
             printw("TAKING OFF");
             break;
-        case droneMsgsROS::droneStatus::LANDING:
+        case aerostack_msgs::FlightState::LANDING:
             printw("LANDING   ");
-            break;
-        case droneMsgsROS::droneStatus::LOOPING:
-            printw("LOOPING   ");
             break;
     }
 }
@@ -607,7 +601,7 @@ void imuCallback(const sensor_msgs::Imu::ConstPtr &msg){
     imu_msg=*msg;
     imu_aux = true;
 }
-void droneStatusCallback(const droneMsgsROS::droneStatus::ConstPtr& msg){
+void droneStatusCallback(const aerostack_msgs::FlightState::ConstPtr& msg){
     quadrotor_status_msg=*msg;
 }
 void actuatorCommandRollPitchCallback(const geometry_msgs::PoseStamped::ConstPtr& msg){

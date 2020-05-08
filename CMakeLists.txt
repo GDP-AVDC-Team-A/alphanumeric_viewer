@@ -32,10 +32,10 @@ set(ALPHANUMERIC_VIEWER_SOURCE_FILES
 
 set(CMAKE_AUTOMOC ON)
 
-find_package(catkin REQUIRED COMPONENTS roscpp std_msgs sensor_msgs  lib_cvgutils droneModuleROS geometry_msgs  image_transport cv_bridge droneMsgsROS )
+find_package(catkin REQUIRED COMPONENTS roscpp std_msgs sensor_msgs aerostack_msgs lib_cvgutils geometry_msgs  image_transport cv_bridge )
 catkin_package(
         DEPENDS OpenCV
-        CATKIN_DEPENDS roscpp std_msgs sensor_msgs geometry_msgs lib_cvgutils droneModuleROS image_transport cv_bridge droneMsgsROS 
+        CATKIN_DEPENDS roscpp std_msgs sensor_msgs aerostack_msgs geometry_msgs lib_cvgutils image_transport cv_bridge 
   )
 include_directories(${ALPHANUMERIC_VIEWER_INCLUDE_DIR})
 include_directories(${ALPHANUMERIC_VIEWER_CONTROLLER_INCLUDE_DIR})
