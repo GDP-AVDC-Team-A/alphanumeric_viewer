@@ -5,8 +5,8 @@
 
 # Subscribed topics
 
-- **status** ([droneMsgsROS/droneStatus](https://bitbucket.org/joselusl/dronemsgsros/src/fa03af3fb09b943ea728d28683ff7b6032f74d66/msg/droneStatus.msg?at=master&fileviewer=file-view-default))   
-One value of the following set {Unknown, Init, Landed, Flying, Hovering, Test, Taking off, Goto Fix Point, Landing, Looping}. This can be obtained from a field of the message Navdata of the AR Drone.
+- **self_localization/flight_state** ([aerostack_msgs/flightState](https://bitbucket.org/visionaerialrobotics/aerostack_msgs/src/7c07e4317e20a1142226d513336a06a2ff585629/msg/FlightState.msg))   
+Flight state (landed, hovering, ...)
 
 - **actuator_command/roll_pitch** ([geometry_msgs/PoseStamped](http://docs.ros.org/api/geometry_msgs/html/msg/PoseStamped.html))           
 Actuator command for the multirotor specifying roll and pitch (the rest of values for <x, y, z, yaw> are discarded).
