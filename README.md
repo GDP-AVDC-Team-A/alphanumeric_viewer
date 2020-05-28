@@ -44,7 +44,7 @@ Temperature reading.
 - **sensor_measurement/imu** ([sensor_msgs/Imu](http://docs.ros.org/melodic/api/sensor_msgs/html/msg/Imu.html))   
 Inertial Measurement Unit data.
 
-- **sensor_measurement/speed** ([geometry_msgs/TwistStamped](http://docs.ros.org/lunar/api/geometry_msgs/html/msg/TwistStamped.html))   
+- **sensor_measurement/linear_speed** ([geometry_msgs/TwistStamped](http://docs.ros.org/lunar/api/geometry_msgs/html/msg/TwistStamped.html))   
 Direct speed estimated by odometry sensors.
 
 
