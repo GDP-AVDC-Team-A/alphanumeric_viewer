@@ -245,22 +245,25 @@ void printStream(double var,bool aux) {
 //Print control mode
 void printControlMode(){
     switch (last_received_control_mode) {
-    case aerostack_msgs::QuadrotorPidControllerMode::SPEED:
+    case aerostack_msgs::MotionControlMode::SPEED:
         printw("SPEED        ");
         break;
-    case aerostack_msgs::QuadrotorPidControllerMode::POSE:
+    case aerostack_msgs::MotionControlMode::POSE:
         printw("POSITION     ");
         break;
-    case aerostack_msgs::QuadrotorPidControllerMode::GROUND_SPEED:
+    case aerostack_msgs::MotionControlMode::GROUND_SPEED:
         printw("GROUND SPEED ");
         break;
-    case aerostack_msgs::QuadrotorPidControllerMode::SPEED_3D:
+    case aerostack_msgs::MotionControlMode::SPEED_3D:
         printw("SPEED 3D     ");
         break; 
-    case aerostack_msgs::QuadrotorPidControllerMode::ATTITUDE:
+    case aerostack_msgs::MotionControlMode::ATTITUDE:
         printw("ATTITUDE     ");
+        break;
+    case aerostack_msgs::MotionControlMode::TRAJECTORY:
+        printw("TRAJECTORY   ");
         break;                   
-     case aerostack_msgs::QuadrotorPidControllerMode::UNKNOWN:
+    case aerostack_msgs::MotionControlMode::UNKNOWN:
     default:
         printw("UNKNOWN      ");
         break;
@@ -614,11 +617,11 @@ void speedRefsSubCallback(const geometry_msgs::TwistStamped::ConstPtr &msg) {
     current_speed_reference = (*msg);
     current_speed_reference_aux = true;
 }
-void controlModeSubCallback(const aerostack_msgs::QuadrotorPidControllerMode::ConstPtr &msg) { 
-    if(msg->command <1 || msg->command >5 ){
-        last_received_control_mode = aerostack_msgs::QuadrotorPidControllerMode::UNKNOWN;
+void controlModeSubCallback(const aerostack_msgs::MotionControlMode::ConstPtr &msg) { 
+    if(msg->mode <1 || msg->mode >5 ){
+        last_received_control_mode = aerostack_msgs::MotionControlMode::UNKNOWN;
     }else{
-        last_received_control_mode = msg->command;    
+        last_received_control_mode = msg->mode;    
     }
 }
 void temperatureCallback(const sensor_msgs::Temperature::ConstPtr &msg){

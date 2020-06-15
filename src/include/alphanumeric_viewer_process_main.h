@@ -52,7 +52,7 @@
 #include "sensor_msgs/Imu.h"
 #include "aerostack_msgs/FlightState.h"
 #include "aerostack_msgs/SetControlMode.h"
-#include "aerostack_msgs/QuadrotorPidControllerMode.h"
+#include "aerostack_msgs/MotionControlMode.h"
 #include "mav_msgs/RollPitchYawrateThrust.h" 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -150,7 +150,7 @@ void actuatorCommandRollPitchCallback(const geometry_msgs::PoseStamped::ConstPtr
 void actuatorCommandAltitudeYawCallback(const geometry_msgs::TwistStamped::ConstPtr& msg);
 void positionRefsCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
 void speedRefsSubCallback(const geometry_msgs::TwistStamped::ConstPtr &msg);
-void controlModeSubCallback(const aerostack_msgs::QuadrotorPidControllerMode::ConstPtr &msg);
+void controlModeSubCallback(const aerostack_msgs::MotionControlMode::ConstPtr &msg);
 void imuCallback(const sensor_msgs::Imu::ConstPtr &msg);
 void temperatureCallback(const sensor_msgs::Temperature::ConstPtr &msg);
 

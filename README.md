@@ -14,7 +14,7 @@ Actuator command for the multirotor specifying roll and pitch (the rest of value
 - **actuator_command/altitude_rate_yaw_rate** ([geometry_msgs/TwistStamped](http://docs.ros.org/api/geometry_msgs/html/msg/TwistStamped.html))           
 Actuator command for the multirotor specifying rates for altitude (d_z) and yaw (d_yaw) (the rest of values for <d_x, d_y, d_yaw, d_pitch, d_roll> are discarded).
 
-- **motion_reference/assumed_control_mode** ([aerostack_msgs/QuadrotorPidControllerMode](https://bitbucket.org/visionaerialrobotics/aerostack_msgs/src/master/msg/QuadrotorPidControllerMode.msg))  
+- **motion_reference/assumed_control_mode** ([aerostack_msgs/MotionControlMode](https://bitbucket.org/visionaerialrobotics/aerostack_msgs/src/master/msg/MotionControlMode.msg))  
 Current controller's control mode.
 
 - **motion_reference/pose** ([geometry_msgs/PoseStamped](http://docs.ros.org/api/geometry_msgs/html/msg/PoseStamped.html))  
