@@ -72,6 +72,8 @@ geometry_msgs::PoseStamped current_position_reference;
 geometry_msgs::TwistStamped current_speed_reference;
 geometry_msgs::PoseStamped actuator_command_roll_pitch_msg;
 geometry_msgs::TwistStamped actuator_command_altitude_yaw_msg;
+mav_msgs::RollPitchYawrateThrust thrust_msg;
+
 int last_received_control_mode;
 double r, p, yaw;
 
@@ -90,6 +92,7 @@ ros::Subscriber actuator_command_altitude_yaw_sub;
 ros::Subscriber control_mode_sub;
 ros::Subscriber position_reference_subscriber;
 ros::Subscriber speed_reference_subscriber;
+ros::Subscriber thrust_sub;
     
 //Variables
 std::stringstream interface_printout_stream;
@@ -109,6 +112,7 @@ bool actuator_command_altitude_yaw_aux;
 bool actuator_command_roll_pitch_aux;  
 bool current_pose_aux;
 bool current_speed_aux;
+bool thrust_aux;
 
 //Topics 
 std::string battery_topic_name;
@@ -125,6 +129,7 @@ std::string status_topic_name;
 std::string self_localization_pose_topic_name;
 std::string motion_reference_speed_topic_name;
 std::string motion_reference_pose_topic_name;
+std::string actuator_command_thrust_topic_name;
 
 //Print-Stream Functions
 void printStream(float var, bool aux);
@@ -153,6 +158,7 @@ void speedRefsSubCallback(const geometry_msgs::TwistStamped::ConstPtr &msg);
 void controlModeSubCallback(const aerostack_msgs::MotionControlMode::ConstPtr &msg);
 void imuCallback(const sensor_msgs::Imu::ConstPtr &msg);
 void temperatureCallback(const sensor_msgs::Temperature::ConstPtr &msg);
+void thrustSubCallback(const mav_msgs::RollPitchYawrateThrust::ConstPtr &msg);
 
 #endif 
 

@@ -1,7 +1,7 @@
 # Alphanumeric Viewer
 
 ![Alphanumeric Viewer](https://i.ibb.co/rwbJBj3/alpha1.png)
-![Alphanumeric Viewer](https://i.ibb.co/VjQPK3H/alpha2.png)
+![Alphanumeric Viewer](https://i.ibb.co/MSvyQm7/alpha2.png)
 
 # Subscribed topics
 
@@ -10,6 +10,9 @@ Flight state (landed, hovering, ...)
 
 - **actuator_command/roll_pitch** ([geometry_msgs/PoseStamped](http://docs.ros.org/api/geometry_msgs/html/msg/PoseStamped.html))           
 Actuator command for the multirotor specifying roll and pitch (the rest of values for <x, y, z, yaw> are discarded).
+
+- **actuator_command/roll_pitch_yaw_rate_thrust** ([mav_msgs/RollPitchYawrateThrust](http://docs.ros.org/api/mav_msgs/html/msg/RollPitchYawrateThrust.html))           
+Actuator command for the multirotor specifying roll (rad), pitch (rad), yaw rate (rad/s) and thrust (N: Newtons).
 
 - **actuator_command/altitude_rate_yaw_rate** ([geometry_msgs/TwistStamped](http://docs.ros.org/api/geometry_msgs/html/msg/TwistStamped.html))           
 Actuator command for the multirotor specifying rates for altitude (d_z) and yaw (d_yaw) (the rest of values for <d_x, d_y, d_yaw, d_pitch, d_roll> are discarded).

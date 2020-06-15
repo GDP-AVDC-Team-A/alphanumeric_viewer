@@ -56,6 +56,7 @@ int main(int argc, char **argv)
     ros::param::get("~self_localization_pose_topic_name", self_localization_pose_topic_name);
     ros::param::get("~motion_reference_speed_topic_name", motion_reference_speed_topic_name);
     ros::param::get("~motion_reference_pose_topic_name", motion_reference_pose_topic_name);
+    ros::param::get("~actuator_command_thrust_topic_name", actuator_command_thrust_topic_name);
 
     //Sensor measurements subscribers
     battery_sub=n.subscribe("/"+drone_id_namespace+"/"+battery_topic_name, 1, &batteryCallback);
@@ -69,6 +70,7 @@ int main(int argc, char **argv)
     actuator_command_roll_pitch_sub = n.subscribe("/"+drone_id_namespace+"/"+actuator_command_roll_pitch_topic_name, 1, &actuatorCommandRollPitchCallback);
     actuator_command_altitude_yaw_sub = n.subscribe("/"+drone_id_namespace+"/"+actuator_command_altitude_yaw_topic_name, 1, &actuatorCommandAltitudeYawCallback);
     control_mode_sub=n.subscribe(std::string("/"+drone_id_namespace + "/" +assumed_control_mode_topic_name), 1, &controlModeSubCallback);
+    thrust_sub=n.subscribe(std::string("/"+drone_id_namespace + "/" +actuator_command_thrust_topic_name), 1, &thrustSubCallback);
 
     //Self localization subscriber
     self_localization_pose_sub= n.subscribe("/"+drone_id_namespace+"/"+self_localization_pose_topic_name, 1, &selfLocalizationPoseCallback);
@@ -118,6 +120,7 @@ int main(int argc, char **argv)
     actuator_command_roll_pitch_aux = false;  
     current_pose_aux = false;
     current_speed_aux = false;
+    thrust_aux = false;
 
     //Loop
     while (ros::ok()) {
@@ -473,8 +476,11 @@ void printNavigationValues(){
     //Speed(z)
     move(13,19);
     printStream(actuator_command_altitude_yaw_msg.twist.linear.z,actuator_command_altitude_yaw_aux);printw(" m/s  ");
-    //Speed(yaw)
+    //Thrust
     move(14,19);
+    printStream(thrust_msg.thrust.z,thrust_aux);printw(" N  ");
+    //Speed(yaw)
+    move(15,19);
     printStream(actuator_command_altitude_yaw_msg.twist.angular.z,actuator_command_altitude_yaw_aux);printw(" rad/s  ");
 
 
@@ -566,6 +572,8 @@ void printNavigationMenu(){
     move(13,0);
     printw(" Speed(z):");
     move(14,0);
+    printw(" Thrust:");
+    move(15,0);
     printw(" Speed(yaw):");
 }
 
@@ -629,3 +637,7 @@ void temperatureCallback(const sensor_msgs::Temperature::ConstPtr &msg){
     temperature_aux = true;
 }
 
+void thrustSubCallback(const mav_msgs::RollPitchYawrateThrust::ConstPtr &msg){
+    thrust_msg = *msg;
+    thrust_aux = true;
+}
