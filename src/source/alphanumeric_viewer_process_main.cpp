@@ -463,27 +463,41 @@ void printNavigationValues(){
     printQuadrotorState();
 
     //Actuator commands
-    //Pitch roll
-    tf2::Matrix3x3 actuator_m(tf2::Quaternion (actuator_command_roll_pitch_msg.pose.orientation.x,actuator_command_roll_pitch_msg.pose.orientation.y,actuator_command_roll_pitch_msg.pose.orientation.z,actuator_command_roll_pitch_msg.pose.orientation.w));
-    r = 0; p = 0; yaw = 0;
-    actuator_m.getRPY(r, p, yaw);
-    if (std::isnan(r)) r = 0.0; 
-    if (std::isnan(p)) p = 0.0; 
-    move(12,19);
-    printStream(p,actuator_command_roll_pitch_aux);printw(",");
-    move(12,26);
-    printStream(r,actuator_command_roll_pitch_aux);printw(" rad  ");
-    //Speed(z)
-    move(13,19);
-    printStream(actuator_command_altitude_yaw_msg.twist.linear.z,actuator_command_altitude_yaw_aux);printw(" m/s  ");
-    //Thrust
-    move(14,19);
-    printStream(thrust_msg.thrust.z,thrust_aux);printw(" N  ");
-    //Speed(yaw)
-    move(15,19);
-    printStream(actuator_command_altitude_yaw_msg.twist.angular.z,actuator_command_altitude_yaw_aux);printw(" rad/s  ");
-
-
+    if(thrust_aux){
+        move(12,19);
+        printStream(thrust_msg.pitch,thrust_aux);printw(",");
+        move(12,26);
+        printStream(thrust_msg.roll,thrust_aux);printw(" rad  ");
+        //Speed(z)
+        move(13,19);
+        printStream(actuator_command_altitude_yaw_msg.twist.linear.z,actuator_command_altitude_yaw_aux);printw(" m/s  ");
+        //Thrust
+        move(14,19);
+        printStream(thrust_msg.thrust.z,thrust_aux);printw(" N  ");
+        //Speed(yaw)
+        move(15,19);
+        printStream(thrust_msg.yaw_rate,thrust_aux);printw(" rad/s  ");
+    }else{
+        //Pitch roll
+        tf2::Matrix3x3 actuator_m(tf2::Quaternion (actuator_command_roll_pitch_msg.pose.orientation.x,actuator_command_roll_pitch_msg.pose.orientation.y,actuator_command_roll_pitch_msg.pose.orientation.z,actuator_command_roll_pitch_msg.pose.orientation.w));
+        r = 0; p = 0; yaw = 0;
+        actuator_m.getRPY(r, p, yaw);
+        if (std::isnan(r)) r = 0.0; 
+        if (std::isnan(p)) p = 0.0; 
+        move(12,19);
+        printStream(p,actuator_command_roll_pitch_aux);printw(",");
+        move(12,26);
+        printStream(r,actuator_command_roll_pitch_aux);printw(" rad  ");
+        //Speed(z)
+        move(13,19);
+        printStream(actuator_command_altitude_yaw_msg.twist.linear.z,actuator_command_altitude_yaw_aux);printw(" m/s  ");
+        //Thrust
+        move(14,19);
+        printStream(thrust_msg.thrust.z,thrust_aux);printw(" N  ");
+        //Speed(yaw)
+        move(15,19);
+        printStream(actuator_command_altitude_yaw_msg.twist.angular.z,actuator_command_altitude_yaw_aux);printw(" rad/s  ");
+    }
 
     //References
     //Pose
